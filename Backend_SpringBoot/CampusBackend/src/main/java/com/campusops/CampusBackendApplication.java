@@ -1,4 +1,4 @@
-package com.backend;
+package com.campusops;
 
 import org.modelmapper.Conditions;
 import org.modelmapper.ModelMapper;
@@ -8,10 +8,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
-public class Application {
+public class CampusBackendApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
+		SpringApplication.run(CampusBackendApplication.class, args);
 	}
 	/*
 	 * configure ModelMapper as spring bean

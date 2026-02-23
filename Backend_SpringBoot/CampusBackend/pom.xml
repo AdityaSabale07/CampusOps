@@ -9,7 +9,7 @@
 		<version>3.5.8</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.cdac</groupId>
+	<groupId>com.campusops</groupId>
 	<artifactId>campusbackend</artifactId>
 	<version>0.0.1</version>
 	<name>CampusBackend</name>
