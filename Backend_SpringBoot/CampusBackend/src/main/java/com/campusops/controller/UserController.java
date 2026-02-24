@@ -1,4 +1,4 @@
-package com.sunbeam.controller;
+package com.campusops.controller;
 
 import java.util.List;
 
@@ -10,16 +10,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import com.sunbeam.daos.CourseRepository;
-import com.sunbeam.daos.UserRepository;
-import com.sunbeam.entities.Course;
-import com.sunbeam.entities.LogStatus;
-import com.sunbeam.entities.Logs;
-import com.sunbeam.entities.User;
-import com.sunbeam.models.UserDTO;
-import com.sunbeam.models.RemarkDTO;
-import com.sunbeam.services.LogsService;
-import com.sunbeam.services.UserService;
+import com.campusops.daos.CourseRepository;
+import com.campusops.daos.UserRepository;
+import com.campusops.entities.Course;
+import com.campusops.entities.LogStatus;
+import com.campusops.entities.Logs;
+import com.campusops.entities.User;
+import com.campusops.models.UserDTO;
+import com.campusops.models.RemarkDTO;
+import com.campusops.services.LogsService;
+import com.campusops.services.UserService;
 
 @CrossOrigin
 @RestController
