@@ -1,4 +1,4 @@
-package com.campusops.service;
+package com.campusops.services;
 
 import java.util.List;
 import java.util.stream.Collectors;
