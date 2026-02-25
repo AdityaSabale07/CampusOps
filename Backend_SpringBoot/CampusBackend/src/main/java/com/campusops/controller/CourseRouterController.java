@@ -1,4 +1,4 @@
-package com.sunbeam.controller;
+package com.campusops.controller;
 
 import java.util.List;
 
@@ -7,8 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.sunbeam.entities.CourseRouter;
-import com.sunbeam.services.CourseRouterService;
+import com.campusops.entities.CourseRouter;
+import com.campusops.services.CourseRouterService;
 
 @CrossOrigin
 @RestController
