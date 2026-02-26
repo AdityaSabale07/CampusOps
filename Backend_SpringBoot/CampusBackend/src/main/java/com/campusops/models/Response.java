@@ -1,4 +1,4 @@
-package com.sunbeam.models;
+package com.campusops.models;
 
 import java.util.HashMap;
 import java.util.Map;
