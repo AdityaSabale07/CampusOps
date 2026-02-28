@@ -16,14 +16,18 @@ const AdminNav = () => {
     // ================= AUTO OPEN BASED ON ROUTE =================
     useEffect(() => {
 
+        closeAllDropdowns();
+
+        // ===== FEEDBACK =====
         if (
             location.pathname.startsWith("/adminfeedback") ||
-            location.pathname.startsWith("/adminschedule") ||
+            location.pathname.startsWith("/adminschedulefeedback") ||
             location.pathname.startsWith("/AdminScheduledList")
         ) {
             setFeedbackOpen(true);
         }
 
+        // ===== TIMESHEET =====
         if (
             location.pathname.startsWith("/log") ||
             location.pathname.startsWith("/timesheets")
@@ -31,7 +35,16 @@ const AdminNav = () => {
             setTimesheetOpen(true);
         }
 
-        if (location.pathname.startsWith("/admin")) {
+        // ===== MODULAR BATCH (FIXED) =====
+        if (
+            location.pathname === "/batches" ||
+            location.pathname.startsWith("/admin/admission") ||
+            location.pathname.startsWith("/admin/admission-analytics") ||
+            location.pathname.startsWith("/admin/modular-admission-report") ||
+            location.pathname.startsWith("/admin/discounts") ||
+            location.pathname.startsWith("/admin/batch-revenue") ||
+            location.pathname.startsWith("/admin/discount-analytics")
+        ) {
             setModularOpen(true);
         }
 
@@ -60,11 +73,20 @@ const AdminNav = () => {
         setModularOpen(false);
     };
 
+    // 🔥 FIXED TOGGLE (stable state update)
     const toggleDropdown = (type) => {
 
-        setTimesheetOpen(type === "timesheet" ? !timesheetOpen : false);
-        setFeedbackOpen(type === "feedback" ? !feedbackOpen : false);
-        setModularOpen(type === "modular" ? !modularOpen : false);
+        setTimesheetOpen(prev =>
+            type === "timesheet" ? !prev : false
+        );
+
+        setFeedbackOpen(prev =>
+            type === "feedback" ? !prev : false
+        );
+
+        setModularOpen(prev =>
+            type === "modular" ? !prev : false
+        );
     };
 
     const logout = () => {
@@ -96,7 +118,7 @@ const AdminNav = () => {
                 {/* ===== TITLE ===== */}
                 <h4 style={titleStyle}>🛠 Admin Panel</h4>
 
-                {/* ===== DASHBOARD ===== */}
+                {/* DASHBOARD */}
                 <Link
                     to="/dashboard"
                     className="nav-link"
@@ -108,7 +130,7 @@ const AdminNav = () => {
 
                 <hr style={dividerStyle} />
 
-                {/* ===== ADMINISTRATION ===== */}
+                {/* ADMIN */}
                 <SectionTitle title="🏢 Administration" />
 
                 <Link
@@ -149,7 +171,7 @@ const AdminNav = () => {
 
                 <hr style={dividerStyle} />
 
-                {/* ===== MODULAR ADMISSION ===== */}
+                {/* MODULAR */}
                 <SectionTitle title="🎓 Modular Admission" />
 
                 <div
@@ -162,66 +184,45 @@ const AdminNav = () => {
                 {modularOpen && (
                     <div style={{ paddingLeft: "20px" }}>
 
-                        <Link
-                            to="/admin/admission"
-                            className="nav-link"
+                        <Link to="/admin/admission" className="nav-link"
                             style={subNavStyle(isActive("/admin/admission"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             🧾 Admission Approvals
                         </Link>
 
-                        <Link
-                            to="/admin/admission-analytics"
-                            className="nav-link"
+                        <Link to="/admin/admission-analytics" className="nav-link"
                             style={subNavStyle(isActive("/admin/admission-analytics"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             📊 Admission Analytics
                         </Link>
 
-                        <Link
-                            to="/admin/modular-admission-report"
-                            className="nav-link"
+                        <Link to="/admin/modular-admission-report" className="nav-link"
                             style={subNavStyle(isActive("/admin/modular-admission-report"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             📋 Modular Report
                         </Link>
 
-                        <Link
-                            to="/admin/discounts"
-                            className="nav-link"
+                        <Link to="/admin/discounts" className="nav-link"
                             style={subNavStyle(isActive("/admin/discounts"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             🎁 Discount Management
                         </Link>
 
-                        <Link
-                            to="/admin/batch-revenue"
-                            className="nav-link"
+                        <Link to="/admin/batch-revenue" className="nav-link"
                             style={subNavStyle(isActive("/admin/batch-revenue"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             🧾 Batch Revenue
                         </Link>
 
-                        <Link
-                            to="/batches"
-                            className="nav-link"
+                        <Link to="/batches" className="nav-link"
                             style={subNavStyle(isActive("/batches"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             🕒 Batches
                         </Link>
 
-                        <Link
-                            to="/admin/discount-analytics"
-                            className="nav-link"
+                        <Link to="/admin/discount-analytics" className="nav-link"
                             style={subNavStyle(isActive("/admin/discount-analytics"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             📊 Discount Analytics
                         </Link>
 
@@ -230,7 +231,7 @@ const AdminNav = () => {
 
                 <hr style={dividerStyle} />
 
-                {/* ===== OPERATIONS ===== */}
+                {/* OPERATIONS */}
                 <SectionTitle title="🕒 Operations" />
 
                 <Link
@@ -251,12 +252,10 @@ const AdminNav = () => {
 
                 {timesheetOpen && (
                     <div style={{ paddingLeft: "20px" }}>
-                        <Link
-                            to="/logAdmin"
+                        <Link to="/logAdmin"
                             className="nav-link"
                             style={subNavStyle(isActive("/logAdmin"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             📑 Logs
                         </Link>
                     </div>
@@ -264,7 +263,7 @@ const AdminNav = () => {
 
                 <hr style={dividerStyle} />
 
-                {/* ===== QUALITY CONTROL ===== */}
+                {/* FEEDBACK */}
                 <SectionTitle title="⭐ Quality Control" />
 
                 <div
@@ -276,34 +275,26 @@ const AdminNav = () => {
 
                 {feedbackOpen && (
                     <div style={{ paddingLeft: "20px" }}>
-
-                        <Link
-                            to="/adminfeedbacktemplate"
+                        <Link to="/adminfeedbacktemplate"
                             className="nav-link"
                             style={subNavStyle(isActive("/adminfeedbacktemplate"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             📝 Templates
                         </Link>
 
-                        <Link
-                            to="/adminschedulefeedback"
+                        <Link to="/adminschedulefeedback"
                             className="nav-link"
                             style={subNavStyle(isActive("/adminschedulefeedback"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             📅 Schedule Feedback
                         </Link>
 
-                        <Link
-                            to="/AdminScheduledList"
+                        <Link to="/AdminScheduledList"
                             className="nav-link"
                             style={subNavStyle(isActive("/AdminScheduledList"))}
-                            onClick={closeAllDropdowns}
-                        >
+                            onClick={closeAllDropdowns}>
                             📊 Scheduled List
                         </Link>
-
                     </div>
                 )}
 
@@ -313,26 +304,20 @@ const AdminNav = () => {
     );
 };
 
-
 /* ===== COMPONENTS ===== */
 
 const SectionTitle = ({ title }) => (
-    <div
-        style={{
-            paddingLeft: "15px",
-            color: "#b2dfdb",
-            fontSize: "13px",
-            fontWeight: "600",
-            marginBottom: "8px",
-            marginTop: "10px"
-        }}
-    >
+    <div style={{
+        paddingLeft: "15px",
+        color: "#b2dfdb",
+        fontSize: "13px",
+        fontWeight: "600",
+        marginBottom: "8px",
+        marginTop: "10px"
+    }}>
         {title}
     </div>
 );
-
-
-/* ===== STYLES ===== */
 
 const titleStyle = {
     paddingLeft: "15px",
