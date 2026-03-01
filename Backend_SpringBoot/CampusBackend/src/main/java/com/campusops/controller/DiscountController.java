@@ -74,4 +74,15 @@ public class DiscountController {
                 discountService.getDiscountsByBatch(batchId, email)
         );
     }
+    
+    @GetMapping("/batch/{batchId}/best")
+    public ResponseEntity<?> getBestDiscount(
+            @PathVariable int batchId,
+            @RequestParam String email) {
+
+        return ResponseEntity.ok(
+                discountService.getBestDiscount(
+                        batchId,
+                        email));
+    }
 }

@@ -9,9 +9,11 @@ import org.springframework.stereotype.Service;
 import com.campusops.daos.BatchRepository;
 import com.campusops.daos.DiscountRepository;
 import com.campusops.daos.ModularBatchRegistrationRepository;
+import com.campusops.discount.DiscountEngine;
 import com.campusops.entities.Batch;
 import com.campusops.entities.Discount;
 import com.campusops.entities.ModularBatchRegistration;
+import com.campusops.models.BestDiscountResult;
 import com.campusops.models.DiscountAnalyticsDTO;
 import com.campusops.models.DiscountDTO;
 
@@ -26,6 +28,9 @@ public class DiscountService {
 
     @Autowired
     private ModularBatchRegistrationRepository regRepo;
+    
+    @Autowired
+    private DiscountEngine discountEngine;
 
     // ================= CREATE DISCOUNT =================
 
@@ -136,5 +141,49 @@ public class DiscountService {
                         d.getEndDate()
                 ))
                 .toList();
+    }
+    
+    public BestDiscountResult getBestDiscount(
+            int batchId,
+            String email) {
+
+        Batch batch = batchRepo.findById(batchId)
+                .orElseThrow(() ->
+                        new RuntimeException("Batch not found"));
+
+        // create temporary registration object
+        ModularBatchRegistration reg =
+                new ModularBatchRegistration();
+
+        reg.setBatch(batch);
+        reg.setEmail(email);
+        reg.setOriginalFee(batch.getFee());
+
+        List<Discount> discounts =
+                discountRepo.findByBatch_Id(batchId);
+
+        Discount best = null;
+        double max = 0;
+
+        for (Discount d : discounts) {
+
+            double current =
+                    discountEngine.calculateDiscount(reg, d);
+
+            if (current > max) {
+                max = current;
+                best = d;
+            }
+        }
+
+        if (best == null)
+            return null;
+
+        return new BestDiscountResult(
+                best.getId(),
+                best.getName(),
+                best.getType(),
+                max
+        );
     }
 }
