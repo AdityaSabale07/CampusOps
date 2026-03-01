@@ -136,7 +136,9 @@ public class DiscountService {
                         d.getId(),
                         d.getName(),
                         d.getType(),
+                        d.getDescription(),
                         d.getValue(),
+                        d.getStudentEmail(), 
                         d.getStartDate(),
                         d.getEndDate()
                 ))
