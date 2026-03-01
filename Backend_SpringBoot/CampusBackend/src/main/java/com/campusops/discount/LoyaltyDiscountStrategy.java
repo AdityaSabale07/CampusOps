@@ -24,10 +24,10 @@ public class LoyaltyDiscountStrategy
                         reg.getEmail(),
                         "APPROVED");
 
+        // eligible only if student has previous course
         if (previous <= 0)
             return 0;
 
-        return reg.getOriginalFee()
-                * discount.getValue() / 100;
+        return 1; // eligible
     }
 }
