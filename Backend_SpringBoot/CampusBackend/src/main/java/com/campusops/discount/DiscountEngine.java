@@ -17,7 +17,9 @@ public class DiscountEngine {
 
     // ================= VALIDATION =================
 
-    public boolean isValidDiscount(ModularBatchRegistration reg,Discount discount) {
+    public boolean isValidDiscount(
+            ModularBatchRegistration reg,
+            Discount discount) {
 
         LocalDate today = LocalDate.now();
 
@@ -35,8 +37,8 @@ public class DiscountEngine {
         // BATCH VALIDATION
         if (discount.getBatch() != null &&
                 reg.getBatch() != null &&
-                discount.getBatch().getId() !=
-                reg.getBatch().getId()) {
+                !discount.getBatch().getId()
+                        .equals(reg.getBatch().getId())) {
             return false;
         }
 
@@ -51,9 +53,33 @@ public class DiscountEngine {
         return true;
     }
 
+    // ================= COMMON AMOUNT CALCULATION =================
+
+    private double calculateAmount(
+            ModularBatchRegistration reg,
+            Discount discount,
+            double rawValue) {
+
+        // If strategy says not applicable
+        if (rawValue <= 0)
+            return 0;
+
+        // MODE = PERCENTAGE
+        if ("PERCENTAGE".equalsIgnoreCase(discount.getMode())) {
+            return reg.getOriginalFee()
+                    * discount.getValue() / 100;
+        }
+
+        // MODE = FLAT (safe protection)
+        return Math.min(discount.getValue(),
+                reg.getOriginalFee());
+    }
+
     // ================= SINGLE DISCOUNT =================
 
-    public double calculateDiscount(  ModularBatchRegistration reg,  Discount discount) {
+    public double calculateDiscount(
+            ModularBatchRegistration reg,
+            Discount discount) {
 
         if (!isValidDiscount(reg, discount)) {
             return 0;
@@ -70,12 +96,20 @@ public class DiscountEngine {
             return 0;
         }
 
-        return strategy.applyDiscount(reg, discount);
+        System.out.println("⚙ Applying Strategy: "
+                + discount.getType());
+
+        double raw =
+                strategy.applyDiscount(reg, discount);
+
+        return calculateAmount(reg, discount, raw);
     }
 
     // ================= BEST DISCOUNT =================
 
-    public double findBestDiscount( ModularBatchRegistration reg, Iterable<Discount> discounts) {
+    public double findBestDiscount(
+            ModularBatchRegistration reg,
+            Iterable<Discount> discounts) {
 
         double maxDiscount = 0;
 
@@ -87,7 +121,7 @@ public class DiscountEngine {
 
             DiscountStrategy strategy =
                     strategies.get(
-                        discount.getType().toUpperCase()
+                            discount.getType().toUpperCase()
                     );
 
             if (strategy == null) {
@@ -96,8 +130,11 @@ public class DiscountEngine {
                 continue;
             }
 
-            double current =
+            double raw =
                     strategy.applyDiscount(reg, discount);
+
+            double current =
+                    calculateAmount(reg, discount, raw);
 
             System.out.println("✅ Checking discount: "
                     + discount.getName()
