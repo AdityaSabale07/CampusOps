@@ -37,8 +37,7 @@ public class DiscountEngine {
         // BATCH VALIDATION
         if (discount.getBatch() != null &&
                 reg.getBatch() != null &&
-                !discount.getBatch().getId()
-                        .equals(reg.getBatch().getId())) {
+                discount.getBatch().getId() !=(reg.getBatch().getId())) {
             return false;
         }
 

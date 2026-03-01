@@ -28,6 +28,7 @@ public class Discount {
 
     // optional: specific student email
     private String studentEmail;
+    private String mode; // FLAT / PERCENTAGE
 
     // ================= GETTERS & SETTERS =================
 
@@ -93,5 +94,12 @@ public class Discount {
 
     public void setStudentEmail(String studentEmail) {
         this.studentEmail = studentEmail;
+    }
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
     }
 }

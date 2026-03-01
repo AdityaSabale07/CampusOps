@@ -8,6 +8,7 @@ public class DiscountDTO {
     private String name;
     private String type;
     private double value;
+    private String mode;
     private LocalDate startDate;
     private LocalDate endDate;
 
