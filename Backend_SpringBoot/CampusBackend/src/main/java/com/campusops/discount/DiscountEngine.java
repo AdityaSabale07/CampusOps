@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.campusops.entities.Discount;
 import com.campusops.entities.ModularBatchRegistration;
+import com.campusops.models.BestDiscountResult;
 
 @Component
 public class DiscountEngine {
@@ -148,5 +149,45 @@ public class DiscountEngine {
                 + maxDiscount);
 
         return maxDiscount;
+    }
+    
+    public BestDiscountResult findBestDiscountInfo(
+            ModularBatchRegistration reg,
+            Iterable<Discount> discounts) {
+
+        double maxDiscount = 0;
+        Discount best = null;
+
+        for (Discount discount : discounts) {
+
+            if (!isValidDiscount(reg, discount)) {
+                continue;
+            }
+
+            DiscountStrategy strategy =
+                    strategies.get(
+                            discount.getType().toUpperCase());
+
+            if (strategy == null) continue;
+
+            double current =
+                    strategy.applyDiscount(reg, discount);
+
+            if (current > maxDiscount) {
+                maxDiscount = current;
+                best = discount;
+            }
+        }
+
+        if (best == null) {
+            return null;
+        }
+
+        return new BestDiscountResult(
+                best.getId(),
+                best.getName(),
+                best.getType(),
+                maxDiscount
+        );
     }
 }
