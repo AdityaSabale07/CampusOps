@@ -9,7 +9,10 @@ const AdminAdmissionApproval = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
-  // ⭐ PAGINATION
+  const [discountMap, setDiscountMap] = useState({});
+  const [selectedDiscount, setSelectedDiscount] = useState({});
+
+  // ⭐ PAGINATION (RESTORED)
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 8;
 
@@ -19,10 +22,52 @@ const AdminAdmissionApproval = () => {
     try {
       const resp = await axios.get("/api/modular-registration");
 
-      // ⭐ NEW REQUESTS FIRST
       const sorted = [...resp.data].sort((a, b) => b.id - a.id);
-
       setData(sorted);
+
+      const temp = {};
+
+      for (let r of sorted) {
+
+        const batchId = r.batch?.id;
+        const email = r.email;
+
+        if (!batchId || !email) continue;
+
+        const key = `${batchId}_${email}`;
+
+        if (temp[key]) continue;
+
+        try {
+          const d = await axios.get(
+            `/api/discounts/batch/${batchId}?email=${email}`
+          );
+
+          temp[key] = d.data || [];
+        } catch {
+          temp[key] = [];
+        }
+      }
+
+      setDiscountMap(temp);
+
+      const sel = {};
+
+      sorted.forEach(r => {
+
+        const key = `${r.batch?.id}_${r.email}`;
+        const discounts = temp[key] || [];
+
+        const match = discounts.find(d =>
+          d.name === r.discountName ||
+          d.type === r.discountType
+        );
+
+        sel[r.id] = match ? match.id : "";
+      });
+
+      setSelectedDiscount(sel);
+
     } catch {
       toast.error("Failed to load registrations");
     }
@@ -36,9 +81,19 @@ const AdminAdmissionApproval = () => {
 
   const approve = async (id) => {
     try {
-      await axios.put(`/api/modular-registration/approve/${id}`);
+
+      const discountId =
+        selectedDiscount[id] || "";
+
+      const url = discountId
+        ? `/api/modular-registration/approve/${id}?discountId=${discountId}`
+        : `/api/modular-registration/approve/${id}`;
+
+      await axios.put(url);
+
       toast.success("Admission approved");
       loadData();
+
     } catch {
       toast.error("Approve failed");
     }
@@ -60,7 +115,7 @@ const AdminAdmissionApproval = () => {
     return "badge bg-warning text-dark";
   };
 
-  // ================= FILTER + SEARCH =================
+  // ================= FILTER =================
 
   const filtered = data
     .filter(r =>
@@ -150,7 +205,6 @@ const AdminAdmissionApproval = () => {
                 />
               </div>
 
-              {/* ⭐ STATUS FILTER */}
               <div className="col-md-4">
                 <select
                   className="form-control"
@@ -192,61 +246,89 @@ const AdminAdmissionApproval = () => {
                   <th>📧 Email</th>
                   <th>📚 Batch</th>
                   <th>💰 Fee</th>
+                  <th>🎁 Discount</th>
                   <th>Status</th>
                   <th className="text-center">Action</th>
                 </tr>
               </thead>
 
               <tbody>
-                {currentData.map((r, index) => (
-                  <tr key={r.id}>
-                    <td>{startIndex + index + 1}</td>
-                    <td>{r.studentName}</td>
-                    <td>{r.email}</td>
-                    <td>{r.batch?.batchName}</td>
-                    <td>₹ {r.finalAmount}</td>
+                {currentData.map((r, index) => {
 
-                    <td>
-                      <span className={badge(r.status)}>
-                        {r.status}
-                      </span>
-                    </td>
+                  const key = `${r.batch?.id}_${r.email}`;
+                  const discounts = discountMap[key] || [];
 
-                    <td className="text-center">
-                      {r.status === "PENDING" ? (
-                        <>
-                          <button
-                            className="btn btn-success btn-sm me-2"
-                            onClick={() => approve(r.id)}
-                          >
-                            ✔ Approve
-                          </button>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => reject(r.id)}
-                          >
-                            ✖ Reject
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-muted">Completed</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                  const hasCombo =
+                    discounts.some(d => d.type === "COMBO");
 
-                {currentData.length === 0 && (
-                  <tr>
-                    <td colSpan="7" className="text-center text-muted">
-                      No registrations found
-                    </td>
-                  </tr>
-                )}
+                  const finalDiscounts =
+                    hasCombo
+                      ? discounts.filter(d => d.type !== "GROUP")
+                      : discounts;
+
+                  return (
+                    <tr key={r.id}>
+                      <td>{startIndex + index + 1}</td>
+                      <td>{r.studentName}</td>
+                      <td>{r.email}</td>
+                      <td>{r.batch?.batchName}</td>
+                      <td>₹ {r.finalAmount}</td>
+
+                      <td>
+                        <select
+                          className="form-control form-control-sm"
+                          disabled={r.status !== "PENDING"}
+                          value={selectedDiscount[r.id] || ""}
+                          onChange={(e) =>
+                            setSelectedDiscount(prev => ({
+                              ...prev,
+                              [r.id]: e.target.value
+                            }))
+                          }
+                        >
+                          <option value="">None</option>
+                          {finalDiscounts.map(d => (
+                            <option key={d.id} value={d.id}>
+                              {d.type}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      <td>
+                        <span className={badge(r.status)}>
+                          {r.status}
+                        </span>
+                      </td>
+
+                      <td className="text-center">
+                        {r.status === "PENDING" ? (
+                          <>
+                            <button
+                              className="btn btn-success btn-sm me-2"
+                              onClick={() => approve(r.id)}
+                            >
+                              ✔ Approve
+                            </button>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => reject(r.id)}
+                            >
+                              ✖ Reject
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-muted">Completed</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
 
             </table>
 
-            {/* ⭐ PAGINATION */}
+            {/* ⭐ PAGINATION RESTORED */}
             <div className="d-flex justify-content-center mt-3">
               {Array.from({ length: totalPages }, (_, i) => (
                 <button

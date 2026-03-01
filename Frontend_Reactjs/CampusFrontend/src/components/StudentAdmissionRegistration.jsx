@@ -7,9 +7,11 @@ const StudentAdmissionRegistration = () => {
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
   const [offers, setOffers] = useState([]);
-  const [selectedDiscount, setSelectedDiscount] = useState("");
 
   const [selectedBatchFee, setSelectedBatchFee] = useState(0);
+
+  // ⭐ GROUP MESSAGE FLAG
+  const [hasGroupDiscount, setHasGroupDiscount] = useState(false);
 
   const [form, setForm] = useState({
     studentName: "",
@@ -50,6 +52,24 @@ const StudentAdmissionRegistration = () => {
     }
   };
 
+  // ⭐ CHECK GROUP DISCOUNT (ADMIN VIEW API)
+  const checkGroupDiscount = async (batchId) => {
+    try {
+      const resp = await axios.get(
+        `/api/discounts/batch/admin/${batchId}`
+      );
+
+      const exists =
+        (resp.data || []).some(
+          d => d.type?.toUpperCase() === "GROUP"
+        );
+
+      setHasGroupDiscount(exists);
+    } catch {
+      setHasGroupDiscount(false);
+    }
+  };
+
   useEffect(() => {
     loadCourses();
   }, []);
@@ -76,12 +96,14 @@ const StudentAdmissionRegistration = () => {
         courseId: value,
         batchId: ""
       }));
+
       setOffers([]);
-      setSelectedDiscount("");
       setSelectedBatchFee(0);
+      setHasGroupDiscount(false);
 
       if (value) loadBatches(value);
       else setBatches([]);
+
       return;
     }
 
@@ -98,15 +120,23 @@ const StudentAdmissionRegistration = () => {
         batchId: value
       }));
 
-      setSelectedDiscount("");
-
       if (value) {
-        loadOffers(value, form.email);
+
+        // ⭐ only load offers if email exists
+        if (form.email) {
+          loadOffers(value, form.email);
+        } else {
+          setOffers([]);
+        }
+
+        checkGroupDiscount(value);
       }
+
       return;
     }
 
     if (name === "email") {
+
       setForm(prev => ({
         ...prev,
         email: value
@@ -115,6 +145,7 @@ const StudentAdmissionRegistration = () => {
       if (form.batchId) {
         loadOffers(form.batchId, value);
       }
+
       return;
     }
 
@@ -136,9 +167,7 @@ const StudentAdmissionRegistration = () => {
         email: form.email,
         phone: form.phone,
         batchId: form.batchId,
-        discountId: selectedDiscount
-          ? Number(selectedDiscount)
-          : null
+        discountId: null   // ADMIN WILL APPLY
       });
 
       toast.success("Admission registered successfully 🎓");
@@ -152,9 +181,9 @@ const StudentAdmissionRegistration = () => {
       });
 
       setOffers([]);
-      setSelectedDiscount("");
       setBatches([]);
       setSelectedBatchFee(0);
+      setHasGroupDiscount(false);
 
     } catch {
       toast.error("Registration failed");
@@ -163,32 +192,20 @@ const StudentAdmissionRegistration = () => {
 
   // ================= HELPERS =================
 
-  const selectedOffer =
-    offers.find(o => o.id === Number(selectedDiscount));
+  // ⭐ SAFE MODE CHECK (FIXED)
+  const isPercentage = (o) =>
+    o?.mode === "PERCENTAGE" ||
+    o?.type === "PERCENTAGE";
 
-  // ⭐ NEW SAFE CHECK (ADDED)
-  const isPercentage = (o) => {
-    return (
-      o?.mode === "PERCENTAGE" ||
-      o?.type === "PERCENTAGE"
-    );
-  };
-
-  const getOfferLabel = (o) => {
-    if (!o) return "";
-    return isPercentage(o)
+  const getOfferLabel = (o) =>
+    isPercentage(o)
       ? `${o.value}% OFF`
       : `₹ ${o.value} OFF`;
-  };
 
-  // ⭐ GROUP OFFER CHECK
-  const hasGroupDiscount =
-    offers.some(o => o.type === "GROUP");
-
-  // BEST OFFER (suggestion only)
   const bestOffer =
     offers.length > 0
       ? [...offers].sort((a, b) => {
+
           const aVal =
             isPercentage(a)
               ? (selectedBatchFee * a.value) / 100
@@ -202,15 +219,6 @@ const StudentAdmissionRegistration = () => {
           return bVal - aVal;
         })[0]
       : null;
-
-  const discountAmount = selectedOffer
-    ? (isPercentage(selectedOffer)
-        ? (selectedBatchFee * selectedOffer.value) / 100
-        : selectedOffer.value)
-    : 0;
-
-  const finalAmount =
-    selectedBatchFee - discountAmount;
 
   // ================= UI =================
 
@@ -257,8 +265,7 @@ const StudentAdmissionRegistration = () => {
               <>
                 👥 <strong>Group Discount Available!</strong>
                 <br />
-                If 5 students are joining together, contact admin
-                before registration approval.
+                Contact admin if you are registering with a group.
               </>
             ) : (
               <>
@@ -275,8 +282,7 @@ const StudentAdmissionRegistration = () => {
 
             <div className="col-md-6">
               <label className="fw-bold">Student Name</label>
-              <input
-                className="form-control"
+              <input className="form-control"
                 name="studentName"
                 value={form.studentName}
                 onChange={handleChange}
@@ -285,8 +291,7 @@ const StudentAdmissionRegistration = () => {
 
             <div className="col-md-6">
               <label className="fw-bold">Email</label>
-              <input
-                className="form-control"
+              <input className="form-control"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
@@ -295,8 +300,7 @@ const StudentAdmissionRegistration = () => {
 
             <div className="col-md-6">
               <label className="fw-bold">Phone</label>
-              <input
-                className="form-control"
+              <input className="form-control"
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
@@ -305,12 +309,10 @@ const StudentAdmissionRegistration = () => {
 
             <div className="col-md-6">
               <label className="fw-bold">Course</label>
-              <select
-                className="form-control"
+              <select className="form-control"
                 name="courseId"
                 value={form.courseId}
-                onChange={handleChange}
-              >
+                onChange={handleChange}>
                 <option value="">Choose Course</option>
                 {courses.map(c => (
                   <option key={c.id} value={c.id}>
@@ -349,7 +351,7 @@ const StudentAdmissionRegistration = () => {
 
           </div>
 
-          {/* OFFERS */}
+          {/* OFFERS INFO */}
           <div style={{
             marginTop: "20px",
             padding: "15px",
@@ -363,12 +365,9 @@ const StudentAdmissionRegistration = () => {
 
             {bestOffer && (
               <div className="alert alert-success py-2">
-                ⭐ Recommended: {bestOffer.type}
-                {" — "}
-                {bestOffer.description || "Best Offer"}
+                ⭐ Best Available Offer: {bestOffer.type}
                 {" • "}
                 {getOfferLabel(bestOffer)}
-
                 <div className="small mt-1">
                   Valid: {formatDate(bestOffer.startDate)}
                   {" → "}
@@ -377,51 +376,9 @@ const StudentAdmissionRegistration = () => {
               </div>
             )}
 
-            <select
-              className="form-control"
-              value={selectedDiscount}
-              onChange={(e) =>
-                setSelectedDiscount(e.target.value)
-              }
-            >
-              <option value="">No Discount</option>
-
-              {offers.map(o => (
-                <option key={o.id} value={o.id}>
-                  {o.type}
-                  {o.description ? ` — ${o.description}` : ""}
-                  {" • "}
-                  {getOfferLabel(o)}
-                  {" | "}
-                  {formatDate(o.startDate)} → {formatDate(o.endDate)}
-                </option>
-              ))}
-            </select>
-
-            {selectedOffer && (
-              <div className="mt-3">
-
-                <div className="fw-bold text-success">
-                  Type: {selectedOffer.type}
-                </div>
-
-                {selectedOffer.description && (
-                  <div className="text-muted">
-                    {selectedOffer.description}
-                  </div>
-                )}
-
-                <div className="text-muted small">
-                  Valid: {formatDate(selectedOffer.startDate)}
-                  {" → "}
-                  {formatDate(selectedOffer.endDate)}
-                </div>
-
-                <div className="mt-1 fw-bold">
-                  Final Payable: ₹ {finalAmount}
-                </div>
-              </div>
-            )}
+            <small className="text-muted">
+              Discounts will be applied by admin after verification.
+            </small>
 
           </div>
 
