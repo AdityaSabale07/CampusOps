@@ -28,7 +28,7 @@ public class DiscountService {
 
     @Autowired
     private ModularBatchRegistrationRepository regRepo;
-    
+
     @Autowired
     private DiscountEngine discountEngine;
 
@@ -124,12 +124,51 @@ public class DiscountService {
         return discounts.stream()
 
                 .filter(d -> {
-                    if (d.getStartDate() == null ||
-                        d.getEndDate() == null)
-                        return true;
 
-                    return !today.isBefore(d.getStartDate())
-                            && !today.isAfter(d.getEndDate());
+                    // ===== DATE VALIDATION =====
+                    if (d.getStartDate() != null &&
+                            today.isBefore(d.getStartDate()))
+                        return false;
+
+                    if (d.getEndDate() != null &&
+                            today.isAfter(d.getEndDate()))
+                        return false;
+
+                    // ===== EMAIL BASED FILTER =====
+                    if ("GROUP".equalsIgnoreCase(d.getType())
+                            || "INDIVIDUAL".equalsIgnoreCase(d.getType())) {
+
+                        if (d.getStudentEmail() == null ||
+                                d.getStudentEmail().isBlank())
+                            return false;
+
+                        // split multiple emails
+                        String[] emails =
+                                d.getStudentEmail().split(",");
+
+                        boolean match = false;
+
+                        for (String e : emails) {
+
+                            String cleaned =
+                                    e.trim().toLowerCase();
+
+                            String input =
+                                    email == null
+                                            ? ""
+                                            : email.trim().toLowerCase();
+
+                            if (cleaned.equals(input)) {
+                                match = true;
+                                break;
+                            }
+                        }
+
+                        if (!match)
+                            return false;
+                    }
+
+                    return true;
                 })
 
                 .map(d -> new DiscountDTO(
@@ -138,13 +177,15 @@ public class DiscountService {
                         d.getType(),
                         d.getDescription(),
                         d.getValue(),
-                        d.getStudentEmail(), 
+                        d.getStudentEmail(),
                         d.getStartDate(),
                         d.getEndDate()
                 ))
                 .toList();
     }
-    
+
+    // ================= BEST DISCOUNT =================
+
     public BestDiscountResult getBestDiscount(
             int batchId,
             String email) {
@@ -153,7 +194,6 @@ public class DiscountService {
                 .orElseThrow(() ->
                         new RuntimeException("Batch not found"));
 
-        // create temporary registration object
         ModularBatchRegistration reg =
                 new ModularBatchRegistration();
 

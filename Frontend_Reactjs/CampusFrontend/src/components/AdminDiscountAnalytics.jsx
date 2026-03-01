@@ -28,6 +28,11 @@ const AdminDiscountAnalytics = () => {
     load();
   }, []);
 
+  // ===== HELPERS =====
+
+  const money = (n) =>
+    `₹ ${Number(n || 0).toLocaleString("en-IN")}`;
+
   // ===== KPIs =====
 
   const totalUsage =
@@ -40,9 +45,11 @@ const AdminDiscountAnalytics = () => {
     data.reduce((s, d) => s + (d.totalRevenue || 0), 0);
 
   const best =
-    [...data].sort(
-      (a, b) => b.totalRevenue - a.totalRevenue
-    )[0];
+    data.length > 0
+      ? [...data].sort(
+          (a, b) => b.totalRevenue - a.totalRevenue
+        )[0]
+      : null;
 
   return (
 
@@ -68,22 +75,49 @@ const AdminDiscountAnalytics = () => {
           {/* KPI CARDS */}
           <div className="row mb-3">
 
-            <Card title="Total Usage" value={totalUsage} icon="🎟️" color="#1976d2"/>
-            <Card title="Total Discount" value={`₹ ${totalDiscount}`} icon="🎁" color="#6a1b9a"/>
-            <Card title="Revenue" value={`₹ ${totalRevenue}`} icon="💰" color="#2e7d32"/>
-            <Card title="Best Discount" value={best?.discountName || "-"} icon="🏆" color="#ef6c00"/>
+            <Card
+              title="Total Usage"
+              value={totalUsage}
+              icon="🎟️"
+              color="#1976d2"
+            />
+
+            <Card
+              title="Total Discount"
+              value={money(totalDiscount)}
+              icon="🎁"
+              color="#6a1b9a"
+            />
+
+            <Card
+              title="Revenue"
+              value={money(totalRevenue)}
+              icon="💰"
+              color="#2e7d32"
+            />
+
+            <Card
+              title="Best Discount"
+              value={best?.discountName || "-"}
+              icon="🏆"
+              color="#ef6c00"
+            />
 
           </div>
 
           {/* TABLE */}
           <div style={{
-            background:"rgba(255,255,255,0.9)",
-            padding:"20px",
-            borderRadius:"20px"
+            background: "rgba(255,255,255,0.9)",
+            padding: "20px",
+            borderRadius: "20px"
           }}>
 
             {loading ? (
               <h5>Loading...</h5>
+            ) : data.length === 0 ? (
+              <h6 className="text-muted">
+                No analytics data yet
+              </h6>
             ) : (
 
               <table className="table align-middle">
@@ -100,7 +134,14 @@ const AdminDiscountAnalytics = () => {
 
                 <tbody>
                   {data.map(d => (
-                    <tr key={d.discountName}>
+                    <tr
+                      key={d.discountName}
+                      className={
+                        best?.discountName === d.discountName
+                          ? "table-success"
+                          : ""
+                      }
+                    >
                       <td>
                         {d.discountName}
                         {best?.discountName === d.discountName &&
@@ -110,8 +151,8 @@ const AdminDiscountAnalytics = () => {
                       </td>
                       <td>{d.discountType}</td>
                       <td>{d.usageCount}</td>
-                      <td>₹ {d.totalDiscount}</td>
-                      <td>₹ {d.totalRevenue}</td>
+                      <td>{money(d.totalDiscount)}</td>
+                      <td>{money(d.totalRevenue)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -131,11 +172,11 @@ const AdminDiscountAnalytics = () => {
 const Card = ({title,value,icon,color}) => (
   <div className="col-md-3 mb-3">
     <div style={{
-      background:color,
-      color:"white",
-      padding:"15px",
-      borderRadius:"15px",
-      textAlign:"center"
+      background: color,
+      color: "white",
+      padding: "15px",
+      borderRadius: "15px",
+      textAlign: "center"
     }}>
       <div>{icon} {title}</div>
       <h5 className="mt-2 mb-0">{value}</h5>

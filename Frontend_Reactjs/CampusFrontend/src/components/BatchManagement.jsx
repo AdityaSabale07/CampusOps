@@ -206,14 +206,21 @@ const BatchManagement = () => {
 
                     {filtered.map((x, i) => {
 
+                      // ⭐ FIXED FILLED SEATS LOGIC
                       const filled =
-                        x.registrations?.length || 0;
+                        x.filledSeats ||
+                        x.registeredCount ||
+                        x.totalRegistrations ||
+                        x.registrations?.length ||
+                        0;
 
                       const percent =
                         x.capacity
-                          ? Math.min(
-                              (filled / x.capacity) * 100,
-                              100
+                          ? Math.round(
+                              Math.min(
+                                (filled / x.capacity) * 100,
+                                100
+                              )
                             )
                           : 0;
 

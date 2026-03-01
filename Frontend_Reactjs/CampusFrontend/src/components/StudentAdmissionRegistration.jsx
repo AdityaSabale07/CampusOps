@@ -54,6 +54,17 @@ const StudentAdmissionRegistration = () => {
     loadCourses();
   }, []);
 
+  // ================= DATE FORMAT =================
+
+  const formatDate = (date) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  };
+
   // ================= HANDLE CHANGE =================
 
   const handleChange = (e) => {
@@ -155,12 +166,51 @@ const StudentAdmissionRegistration = () => {
   const selectedOffer =
     offers.find(o => o.id === Number(selectedDiscount));
 
+  // ⭐ NEW SAFE CHECK (ADDED)
+  const isPercentage = (o) => {
+    return (
+      o?.mode === "PERCENTAGE" ||
+      o?.type === "PERCENTAGE"
+    );
+  };
+
   const getOfferLabel = (o) => {
     if (!o) return "";
-    return o.type === "PERCENTAGE"
+    return isPercentage(o)
       ? `${o.value}% OFF`
       : `₹ ${o.value} OFF`;
   };
+
+  // ⭐ GROUP OFFER CHECK
+  const hasGroupDiscount =
+    offers.some(o => o.type === "GROUP");
+
+  // BEST OFFER (suggestion only)
+  const bestOffer =
+    offers.length > 0
+      ? [...offers].sort((a, b) => {
+          const aVal =
+            isPercentage(a)
+              ? (selectedBatchFee * a.value) / 100
+              : a.value;
+
+          const bVal =
+            isPercentage(b)
+              ? (selectedBatchFee * b.value) / 100
+              : b.value;
+
+          return bVal - aVal;
+        })[0]
+      : null;
+
+  const discountAmount = selectedOffer
+    ? (isPercentage(selectedOffer)
+        ? (selectedBatchFee * selectedOffer.value) / 100
+        : selectedOffer.value)
+    : 0;
+
+  const finalAmount =
+    selectedBatchFee - discountAmount;
 
   // ================= UI =================
 
@@ -168,7 +218,6 @@ const StudentAdmissionRegistration = () => {
 
     <div className="container py-4">
 
-      {/* MAIN CARD */}
       <div
         style={{
           maxWidth: "900px",
@@ -200,6 +249,24 @@ const StudentAdmissionRegistration = () => {
         </div>
 
         <hr />
+
+        {/* GROUP INFO */}
+        {form.batchId && (
+          <div className={`alert ${hasGroupDiscount ? "alert-info" : "alert-secondary"}`}>
+            {hasGroupDiscount ? (
+              <>
+                👥 <strong>Group Discount Available!</strong>
+                <br />
+                If 5 students are joining together, contact admin
+                before registration approval.
+              </>
+            ) : (
+              <>
+                ℹ️ Group discount is not available for this batch.
+              </>
+            )}
+          </div>
+        )}
 
         {/* FORM */}
         <form onSubmit={handleSubmit}>
@@ -271,7 +338,6 @@ const StudentAdmissionRegistration = () => {
               </select>
             </div>
 
-            {/* COURSE FEE */}
             <div className="col-md-6">
               <label className="fw-bold">Course Fee</label>
               <input
@@ -284,18 +350,32 @@ const StudentAdmissionRegistration = () => {
           </div>
 
           {/* OFFERS */}
-          <div
-            style={{
-              marginTop: "20px",
-              padding: "15px",
-              borderRadius: "12px",
-              background: "#f4faff",
-              border: "1px solid #dbeafe"
-            }}
-          >
+          <div style={{
+            marginTop: "20px",
+            padding: "15px",
+            borderRadius: "12px",
+            background: "#f4faff"
+          }}>
+
             <h6 className="fw-bold mb-2">
               🎁 Available Offers ({offers.length})
             </h6>
+
+            {bestOffer && (
+              <div className="alert alert-success py-2">
+                ⭐ Recommended: {bestOffer.type}
+                {" — "}
+                {bestOffer.description || "Best Offer"}
+                {" • "}
+                {getOfferLabel(bestOffer)}
+
+                <div className="small mt-1">
+                  Valid: {formatDate(bestOffer.startDate)}
+                  {" → "}
+                  {formatDate(bestOffer.endDate)}
+                </div>
+              </div>
+            )}
 
             <select
               className="form-control"
@@ -308,18 +388,41 @@ const StudentAdmissionRegistration = () => {
 
               {offers.map(o => (
                 <option key={o.id} value={o.id}>
-                  {o.name} — {getOfferLabel(o)}
+                  {o.type}
+                  {o.description ? ` — ${o.description}` : ""}
+                  {" • "}
+                  {getOfferLabel(o)}
+                  {" | "}
+                  {formatDate(o.startDate)} → {formatDate(o.endDate)}
                 </option>
               ))}
             </select>
 
             {selectedOffer && (
-              <div className="mt-2 text-success fw-bold">
-                Discount Type: {selectedOffer.type}
-                {" • "}
-                {getOfferLabel(selectedOffer)}
+              <div className="mt-3">
+
+                <div className="fw-bold text-success">
+                  Type: {selectedOffer.type}
+                </div>
+
+                {selectedOffer.description && (
+                  <div className="text-muted">
+                    {selectedOffer.description}
+                  </div>
+                )}
+
+                <div className="text-muted small">
+                  Valid: {formatDate(selectedOffer.startDate)}
+                  {" → "}
+                  {formatDate(selectedOffer.endDate)}
+                </div>
+
+                <div className="mt-1 fw-bold">
+                  Final Payable: ₹ {finalAmount}
+                </div>
               </div>
             )}
+
           </div>
 
           <button className="btn btn-primary w-100 mt-4">

@@ -33,10 +33,18 @@ const AdminBatchRevenueReport = () => {
     loadReport();
   }, []);
 
+  // ================= HELPERS =================
+
+  const money = (n) =>
+    `₹ ${Number(n || 0).toLocaleString("en-IN")}`;
+
   // ================= TOTAL REVENUE =================
 
   const totalRevenue = data.reduce(
-    (sum, b) => sum + Number(b.totalRevenue || 0),
+    (sum, b) =>
+      sum + Number(
+        b.totalRevenue || b.revenue || 0
+      ),
     0
   );
 
@@ -92,7 +100,7 @@ const AdminBatchRevenueReport = () => {
                   fontWeight: "600"
                 }}
               >
-                Total Revenue: ₹ {totalRevenue}
+                Total Revenue: {money(totalRevenue)}
               </div>
 
             </div>
@@ -121,19 +129,25 @@ const AdminBatchRevenueReport = () => {
                 <thead>
                   <tr className="text-secondary">
                     <th>Batch</th>
-                    <th>Course</th>
                     <th>Total Registrations</th>
                     <th>Total Revenue</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {data.map((b) => (
-                    <tr key={b.batchName}>
-                      <td>{b.batchName || "-"}</td>
-                      <td>{b.courseName || "-"}</td>
-                      <td>{b.totalRegistrations || 0}</td>
-                      <td>₹ {b.totalRevenue || 0}</td>
+                  {data.map((b, index) => (
+                    <tr key={index}>
+                      <td>
+                        {b.batchName || b.batch || "-"}
+                      </td>
+                      <td>
+                        {b.totalRegistrations || b.registrations || 0}
+                      </td>
+                      <td>
+                        {money(
+                          b.totalRevenue || b.revenue || 0
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
