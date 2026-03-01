@@ -14,6 +14,7 @@ public class SuperOfferDiscountStrategy
             ModularBatchRegistration reg,
             Discount discount) {
 
-        return reg.getOriginalFee() * 0.25;
+        // always eligible
+        return 1;
     }
 }
