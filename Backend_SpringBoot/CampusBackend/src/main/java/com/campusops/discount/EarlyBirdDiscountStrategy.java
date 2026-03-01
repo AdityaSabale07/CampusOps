@@ -14,7 +14,8 @@ public class EarlyBirdDiscountStrategy
             ModularBatchRegistration reg,
             Discount discount) {
 
-        // EARLY BIRD = FIXED AMOUNT
-        return discount.getValue();
+        // EARLY_BIRD eligibility already validated by DiscountEngine
+        // return 1 = eligible
+        return 1;
     }
 }
