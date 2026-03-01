@@ -18,17 +18,14 @@ public class ComboBatchDiscountStrategy implements DiscountStrategy {
             ModularBatchRegistration reg,
             Discount discount) {
 
-        // check if student already completed
+        // check if student completed previous course
         boolean hasPrevious =
                 regRepo.existsByEmailAndStatus(
                         reg.getEmail(),
                         "APPROVED");
 
-        if (hasPrevious) {
-
-            return reg.getOriginalFee()
-                    * discount.getValue() / 100;
-        }
+        if (hasPrevious)
+            return 1; // eligible
 
         return 0;
     }
