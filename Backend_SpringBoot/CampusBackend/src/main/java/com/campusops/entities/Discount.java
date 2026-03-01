@@ -15,6 +15,7 @@ public class Discount {
 
     // EARLY_BIRD / FLAT / PERCENTAGE / INDIVIDUAL
     private String type;
+    private String description;
 
     private double value;
 
@@ -54,6 +55,14 @@ public class Discount {
 
     public void setType(String type) {
         this.type = type;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public double getValue() {
