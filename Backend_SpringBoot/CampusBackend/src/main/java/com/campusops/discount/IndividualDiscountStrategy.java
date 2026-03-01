@@ -14,6 +14,9 @@ public class IndividualDiscountStrategy
             ModularBatchRegistration reg,
             Discount discount) {
 
-        return discount.getValue();
+        // Student validation already handled
+        // in DiscountEngine
+
+        return 1; // eligible
     }
 }
