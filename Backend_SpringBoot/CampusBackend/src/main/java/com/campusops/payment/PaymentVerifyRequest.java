@@ -2,16 +2,16 @@ package com.campusops.payment;
 
 public class PaymentVerifyRequest {
 
-    private Long registrationId;
+    private Integer registrationId;
     private String razorpayOrderId;
     private String razorpayPaymentId;
     private String razorpaySignature;
 
-    public Long getRegistrationId() {
+    public Integer getRegistrationId() {
         return registrationId;
     }
 
-    public void setRegistrationId(Long registrationId) {
+    public void setRegistrationId(Integer registrationId) {
         this.registrationId = registrationId;
     }
 

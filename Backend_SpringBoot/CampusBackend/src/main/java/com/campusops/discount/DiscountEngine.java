@@ -24,7 +24,7 @@ public class DiscountEngine {
 
         LocalDate today = LocalDate.now();
 
-        // DATE VALIDATION
+        // ===== DATE VALIDATION =====
         if (discount.getStartDate() != null &&
                 today.isBefore(discount.getStartDate())) {
             return false;
@@ -35,26 +35,40 @@ public class DiscountEngine {
             return false;
         }
 
-        // BATCH VALIDATION
+        // ===== BATCH VALIDATION =====
         if (discount.getBatch() != null &&
                 reg.getBatch() != null &&
                 discount.getBatch().getId() != reg.getBatch().getId()) {
             return false;
         }
 
-        // ================= STUDENT VALIDATION (FIXED) =================
-        // Supports comma separated emails for GROUP discounts
+        // ================= STUDENT VALIDATION (FINAL FIX) =================
+        // GROUP + INDIVIDUAL must have email list
+        // COMBO handled by strategy
 
-        if (discount.getStudentEmail() != null &&
-                !discount.getStudentEmail().isBlank() &&
-                reg.getEmail() != null) {
+        String type = discount.getType();
 
-            String[] emails = discount.getStudentEmail().split(",");
+        if ("GROUP".equalsIgnoreCase(type)
+                || "INDIVIDUAL".equalsIgnoreCase(type)) {
+
+            // email list must exist
+            if (discount.getStudentEmail() == null
+                    || discount.getStudentEmail().isBlank()) {
+                return false;
+            }
+
+            if (reg.getEmail() == null) {
+                return false;
+            }
+
+            String[] emails =
+                    discount.getStudentEmail().split(",");
 
             boolean matched = false;
 
             for (String e : emails) {
-                if (e.trim().equalsIgnoreCase(reg.getEmail())) {
+                if (e.trim()
+                        .equalsIgnoreCase(reg.getEmail())) {
                     matched = true;
                     break;
                 }
@@ -75,7 +89,7 @@ public class DiscountEngine {
             Discount discount,
             double rawValue) {
 
-        // If strategy says not applicable
+        // strategy not applicable
         if (rawValue <= 0)
             return 0;
 
@@ -85,9 +99,11 @@ public class DiscountEngine {
                     * discount.getValue() / 100;
         }
 
-        // MODE = FLAT (safe protection)
-        return Math.min(discount.getValue(),
-                reg.getOriginalFee());
+        // MODE = FLAT
+        return Math.min(
+                discount.getValue(),
+                reg.getOriginalFee()
+        );
     }
 
     // ================= SINGLE DISCOUNT =================
@@ -185,9 +201,9 @@ public class DiscountEngine {
                     strategies.get(
                             discount.getType().toUpperCase());
 
-            if (strategy == null) continue;
+            if (strategy == null)
+                continue;
 
-            // ⭐ FIXED (NOW USES calculateAmount)
             double raw =
                     strategy.applyDiscount(reg, discount);
 

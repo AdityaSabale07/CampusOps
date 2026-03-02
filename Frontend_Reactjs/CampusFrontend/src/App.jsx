@@ -91,7 +91,7 @@ import AdminModularAdmissionReport from "./components/AdminModularAdmissionRepor
 import AdminDiscountManagement from './components/AdminDiscountManagement';
 import AdminBatchRevenueReport from "./components/AdminBatchRevenueReport";
 import AdminDiscountAnalytics from "./components/AdminDiscountAnalytics";
-
+import FakePaymentPage from './components/FakePaymentPage';
 // ================= APP =================
 
 function App() {
@@ -159,7 +159,7 @@ function App() {
             <Route component={AdmissionLandingPage} path="/admission" exact />
             <Route component={StudentAdmissionRegistration} path="/admission/register" />
             <Route component={StudentAdmissionStatus} path="/admission/status" />
-
+            <Route path="/fake-payment/:id" component={FakePaymentPage} />
             {/* ================= ADMIN ROUTES ================= */}
             <ProtectedRoute role="ADMIN" component={Dashboard} path="/dashboard" />
             <ProtectedRoute role="ADMIN" component={CardView} path="/cardview" />

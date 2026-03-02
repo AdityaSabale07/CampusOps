@@ -1,5 +1,6 @@
 package com.campusops.entities;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -47,6 +48,11 @@ public class ModularBatchRegistration {
 
     private String tempPassword;
     // shown to student after approval
+    
+    private String paymentStatus;
+    private String paymentId;
+    private LocalDateTime paymentDate;
+    private LocalDate paymentDueDate;
 
     // ================= RELATION =================
 
@@ -59,6 +65,7 @@ public class ModularBatchRegistration {
     public ModularBatchRegistration() {
         this.registeredOn = LocalDateTime.now();
         this.status = "PENDING";
+        this.paymentStatus = "PENDING";
     }
 
     // ================= GETTERS & SETTERS =================
@@ -174,5 +181,38 @@ public class ModularBatchRegistration {
 
     public void setDiscountType(String discountType) {
         this.discountType = discountType;
+    }
+ // ================= PAYMENT GETTERS =================
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public String getPaymentId() {
+        return paymentId;
+    }
+
+    public void setPaymentId(String paymentId) {
+        this.paymentId = paymentId;
+    }
+
+    public LocalDateTime getPaymentDate() {
+        return paymentDate;
+    }
+
+    public void setPaymentDate(LocalDateTime paymentDate) {
+        this.paymentDate = paymentDate;
+    }
+
+    public LocalDate getPaymentDueDate() {
+        return paymentDueDate;
+    }
+
+    public void setPaymentDueDate(LocalDate paymentDueDate) {
+        this.paymentDueDate = paymentDueDate;
     }
 }

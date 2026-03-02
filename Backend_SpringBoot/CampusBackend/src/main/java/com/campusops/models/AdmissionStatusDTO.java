@@ -1,7 +1,9 @@
 package com.campusops.models;
 
-public class AdmissionStatusDTO {
+import java.time.LocalDate;
 
+public class AdmissionStatusDTO {
+	private int id;
     private String studentName;
     private String email;
     private String status;
@@ -13,15 +15,27 @@ public class AdmissionStatusDTO {
 
     private String tempPassword;
 
-    // ⭐ NEW FIELD (ADD THIS)
+    // ⭐ REGISTRATION
     private String registrationId;
 
     // ⭐ DISCOUNT
     private String discountName;
     private String discountType;
 
-    // ===== GETTERS & SETTERS =====
+    // ⭐ NEW PAYMENT FIELDS
+    private String paymentStatus;
+    private LocalDate paymentDueDate;
 
+    // ===== GETTERS & SETTERS =====
+  
+    
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
     public String getStudentName() {
         return studentName;
     }
@@ -78,7 +92,7 @@ public class AdmissionStatusDTO {
         this.tempPassword = tempPassword;
     }
 
-    // ⭐ REGISTRATION ID GETTER SETTER
+    // ===== REGISTRATION =====
 
     public String getRegistrationId() {
         return registrationId;
@@ -104,5 +118,23 @@ public class AdmissionStatusDTO {
 
     public void setDiscountType(String discountType) {
         this.discountType = discountType;
+    }
+
+    // ===== PAYMENT =====
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public LocalDate getPaymentDueDate() {
+        return paymentDueDate;
+    }
+
+    public void setPaymentDueDate(LocalDate paymentDueDate) {
+        this.paymentDueDate = paymentDueDate;
     }
 }

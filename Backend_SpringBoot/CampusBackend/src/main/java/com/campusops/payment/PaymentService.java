@@ -4,7 +4,7 @@ import org.json.JSONObject;
 
 public interface PaymentService {
 
-    JSONObject createOrder(Long registrationId);
+    JSONObject createOrder(int registrationId);
 
     String verifyPayment(PaymentVerifyRequest request);
 }

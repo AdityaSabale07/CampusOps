@@ -12,7 +12,7 @@ const AdminAdmissionApproval = () => {
   const [discountMap, setDiscountMap] = useState({});
   const [selectedDiscount, setSelectedDiscount] = useState({});
 
-  // ⭐ PAGINATION (RESTORED)
+  // ⭐ PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 8;
 
@@ -27,6 +27,7 @@ const AdminAdmissionApproval = () => {
 
       const temp = {};
 
+      // 🔥 FIXED — LOAD DISCOUNTS USING BATCH + EMAIL
       for (let r of sorted) {
 
         const batchId = r.batch?.id;
@@ -43,13 +44,34 @@ const AdminAdmissionApproval = () => {
             `/api/discounts/batch/${batchId}?email=${email}`
           );
 
-          temp[key] = d.data || [];
+          // ⭐⭐⭐ MAIN FIX
+          const safeDiscounts = (d.data || []).filter(dis => {
+
+            // GROUP must match email
+            if (dis.type === "GROUP") {
+
+              if (!dis.studentEmail) return false;
+
+              const emails = dis.studentEmail
+                .split(",")
+                .map(e => e.trim().toLowerCase());
+
+              return emails.includes(email.toLowerCase());
+            }
+
+            return true;
+          });
+
+          temp[key] = safeDiscounts;
+
         } catch {
           temp[key] = [];
         }
       }
 
       setDiscountMap(temp);
+
+      // ================= PREFILL SELECTED DISCOUNT =================
 
       const sel = {};
 
@@ -328,7 +350,7 @@ const AdminAdmissionApproval = () => {
 
             </table>
 
-            {/* ⭐ PAGINATION RESTORED */}
+            {/* ⭐ PAGINATION */}
             <div className="d-flex justify-content-center mt-3">
               {Array.from({ length: totalPages }, (_, i) => (
                 <button

@@ -41,18 +41,27 @@ const StudentAdmissionRegistration = () => {
     }
   };
 
+  // ⭐ FIXED OFFER LOADER
   const loadOffers = async (batchId, email) => {
+
+    if (!batchId || !email) {
+      setOffers([]);
+      return;
+    }
+
     try {
       const resp = await axios.get(
-        `/api/discounts/batch/${batchId}?email=${email || ""}`
+        `/api/discounts/batch/${batchId}?email=${email}`
       );
+
       setOffers(resp.data || []);
     } catch {
+      setOffers([]);
       toast.error("Failed to load offers");
     }
   };
 
-  // ⭐ CHECK GROUP DISCOUNT (ADMIN VIEW API)
+  // ⭐ CHECK GROUP DISCOUNT
   const checkGroupDiscount = async (batchId) => {
     try {
       const resp = await axios.get(
@@ -121,15 +130,10 @@ const StudentAdmissionRegistration = () => {
       }));
 
       if (value) {
-
-        // ⭐ only load offers if email exists
-        if (form.email) {
-          loadOffers(value, form.email);
-        } else {
-          setOffers([]);
-        }
-
+        loadOffers(value, form.email);
         checkGroupDiscount(value);
+      } else {
+        setOffers([]);
       }
 
       return;
@@ -142,8 +146,11 @@ const StudentAdmissionRegistration = () => {
         email: value
       }));
 
+      // ⭐ LIVE RELOAD OFFERS
       if (form.batchId) {
         loadOffers(form.batchId, value);
+      } else {
+        setOffers([]);
       }
 
       return;
@@ -167,7 +174,7 @@ const StudentAdmissionRegistration = () => {
         email: form.email,
         phone: form.phone,
         batchId: form.batchId,
-        discountId: null   // ADMIN WILL APPLY
+        discountId: null
       });
 
       toast.success("Admission registered successfully 🎓");
@@ -192,10 +199,8 @@ const StudentAdmissionRegistration = () => {
 
   // ================= HELPERS =================
 
-  // ⭐ SAFE MODE CHECK (FIXED)
   const isPercentage = (o) =>
-    o?.mode === "PERCENTAGE" ||
-    o?.type === "PERCENTAGE";
+    o?.mode === "PERCENTAGE";
 
   const getOfferLabel = (o) =>
     isPercentage(o)
@@ -237,7 +242,6 @@ const StudentAdmissionRegistration = () => {
         }}
       >
 
-        {/* HEADER */}
         <div className="d-flex justify-content-between align-items-center mb-3">
 
           <div>
@@ -258,7 +262,6 @@ const StudentAdmissionRegistration = () => {
 
         <hr />
 
-        {/* GROUP INFO */}
         {form.batchId && (
           <div className={`alert ${hasGroupDiscount ? "alert-info" : "alert-secondary"}`}>
             {hasGroupDiscount ? (
@@ -275,8 +278,9 @@ const StudentAdmissionRegistration = () => {
           </div>
         )}
 
-        {/* FORM */}
         <form onSubmit={handleSubmit}>
+          {/* ALL YOUR ORIGINAL UI KEPT EXACT SAME */}
+          {/* (unchanged below) */}
 
           <div className="row g-3">
 
@@ -351,7 +355,6 @@ const StudentAdmissionRegistration = () => {
 
           </div>
 
-          {/* OFFERS INFO */}
           <div style={{
             marginTop: "20px",
             padding: "15px",

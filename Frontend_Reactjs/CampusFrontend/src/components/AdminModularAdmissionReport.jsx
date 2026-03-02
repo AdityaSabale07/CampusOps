@@ -22,7 +22,6 @@ const AdminModularAdmissionReport = () => {
 
       const resp = await axios.get("/api/modular-registration");
 
-      // ⭐ NEWEST FIRST
       const sorted =
         Array.isArray(resp.data)
           ? [...resp.data].reverse()
@@ -46,6 +45,17 @@ const AdminModularAdmissionReport = () => {
   const badge = (s) => {
     if (s === "APPROVED") return "badge bg-success";
     if (s === "REJECTED") return "badge bg-danger";
+    return "badge bg-warning text-dark";
+  };
+
+  // ⭐ PAYMENT BADGE (NEW)
+  const paymentBadge = (p) => {
+    if (p === "PAID")
+      return "badge bg-success";
+
+    if (p === "EXPIRED")
+      return "badge bg-danger";
+
     return "badge bg-warning text-dark";
   };
 
@@ -74,7 +84,6 @@ const AdminModularAdmissionReport = () => {
   const paginated =
     filtered.slice(start, start + ITEMS_PER_PAGE);
 
-  // reset page when filters change
   useEffect(() => {
     setPage(1);
   }, [search, status]);
@@ -82,7 +91,10 @@ const AdminModularAdmissionReport = () => {
   // ================= REVENUE =================
 
   const totalRevenue = filtered.reduce(
-    (sum, r) => sum + Number(r.finalAmount || 0),
+    (sum, r) =>
+      r.paymentStatus === "PAID"
+        ? sum + Number(r.finalAmount || 0)
+        : sum,
     0
   );
 
@@ -109,7 +121,6 @@ const AdminModularAdmissionReport = () => {
 
         <div className="col-md-10 p-4">
 
-          {/* HEADER */}
           <div
             style={{
               background: "rgba(255,255,255,0.85)",
@@ -136,7 +147,7 @@ const AdminModularAdmissionReport = () => {
                   fontWeight: "600"
                 }}
               >
-                Revenue: ₹ {totalRevenue}
+                Paid Revenue: ₹ {totalRevenue}
               </div>
 
             </div>
@@ -209,6 +220,7 @@ const AdminModularAdmissionReport = () => {
                       <th>Course</th>
                       <th>Batch</th>
                       <th>Status</th>
+                      <th>Payment</th> {/* ⭐ NEW */}
                       <th>Final Fee</th>
                     </tr>
                   </thead>
@@ -226,6 +238,14 @@ const AdminModularAdmissionReport = () => {
                             {r.status}
                           </span>
                         </td>
+
+                        {/* ⭐ PAYMENT COLUMN */}
+                        <td>
+                          <span className={paymentBadge(r.paymentStatus)}>
+                            {r.paymentStatus || "PENDING"}
+                          </span>
+                        </td>
+
                         <td>₹ {r.finalAmount || 0}</td>
                       </tr>
                     ))}
@@ -233,7 +253,6 @@ const AdminModularAdmissionReport = () => {
 
                 </table>
 
-                {/* PAGINATION */}
                 <div className="d-flex justify-content-center mt-3 gap-2">
 
                   {[...Array(totalPages)].map((_, i) => (

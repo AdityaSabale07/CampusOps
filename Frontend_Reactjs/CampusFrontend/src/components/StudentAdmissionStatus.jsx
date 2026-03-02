@@ -34,6 +34,30 @@ const StudentAdmissionStatus = () => {
     }
   };
 
+  // ===== PAYMENT (FAKE PAYMENT MODE) =====
+
+  const handlePayment = async () => {
+
+    try {
+
+      // ⭐ directly call verify (simulate payment success)
+      await axios.post("/api/payment/verify", {
+        registrationId: data.id,
+        razorpayOrderId: "TEST_ORDER",
+        razorpayPaymentId: "TEST_PAYMENT",
+        razorpaySignature: "TEST_SIGN"
+      });
+
+      toast.success("Payment Successful 🎉");
+
+      // refresh latest status
+      checkStatus();
+
+    } catch (err) {
+      toast.error(err.response?.data || "Payment failed");
+    }
+  };
+
   // ===== BADGE =====
 
   const badge = (status) => {
@@ -69,12 +93,10 @@ const StudentAdmissionStatus = () => {
         }}
       >
 
-        {/* ===== HEADER ===== */}
         <h4 className="fw-bold text-center mb-3">
           📊 Admission Status Checker
         </h4>
 
-        {/* ===== SEARCH ===== */}
         <div className="row align-items-end mb-3">
 
           <div className="col-md-8">
@@ -121,9 +143,7 @@ const StudentAdmissionStatus = () => {
               🎓 Admission Details
             </h6>
 
-            {/* ⭐ NEW: REGISTRATION ID */}
             <div><b>Registration ID:</b> {data.registrationId || "-"}</div>
-
             <div><b>Name:</b> {data.studentName}</div>
             <div><b>Email:</b> {data.email}</div>
             <div><b>Batch:</b> {data.batchName || "-"}</div>
@@ -135,6 +155,19 @@ const StudentAdmissionStatus = () => {
               </div>
             )}
 
+            {/* ⭐ PAYMENT INFO */}
+            {data.paymentStatus && (
+              <div>
+                <b>Payment Status:</b> {data.paymentStatus}
+              </div>
+            )}
+
+            {data.paymentDueDate && (
+              <div>
+                <b>Payment Due Date:</b> {data.paymentDueDate}
+              </div>
+            )}
+
             <div className="mt-2">
               <span className={badge(data.status)}>
                 {data.status}
@@ -142,18 +175,32 @@ const StudentAdmissionStatus = () => {
             </div>
 
             {/* ===== APPROVED ===== */}
-            {data.status === "APPROVED" && (
+            {data.status === "APPROVED" && data.paymentStatus === "PENDING" && (
+              <div className="alert alert-info mt-3 mb-0">
+
+                <b>💳 Admission Approved — Payment Pending</b>
+
+                <button
+                  className="btn btn-primary btn-sm mt-3"
+                 onClick={() =>
+  window.location.href = `/fake-payment/${data.id}`
+}
+                >
+                  💰 Pay Now
+                </button>
+
+              </div>
+            )}
+
+            {/* ===== AFTER PAYMENT ===== */}
+            {data.status === "APPROVED" && data.paymentStatus === "PAID" && (
               <div className="alert alert-success mt-3 mb-0">
 
-                <b>🎉 Admission Approved</b>
+                <b>🎉 Payment Successful</b>
 
                 <div className="mt-2">
-                  <div><b>Registration ID:</b> {data.registrationId || "-"}</div>
                   <div><b>Login Email:</b> {data.email}</div>
-                  <div>
-                    <b>Password:</b>{" "}
-                    {data.tempPassword || "welcome123"}
-                  </div>
+                  <div><b>Password:</b> {data.tempPassword || "welcome123"}</div>
                 </div>
 
                 <button
