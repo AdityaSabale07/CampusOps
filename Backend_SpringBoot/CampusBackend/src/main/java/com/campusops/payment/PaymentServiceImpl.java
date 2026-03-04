@@ -126,7 +126,7 @@ public class PaymentServiceImpl implements PaymentService {
 //            boolean isValid =
 //                    Utils.verifyPaymentSignature(options, keySecret); for real razerpay
             
-            boolean isValid =true;
+            boolean isValid =true; // just for demo
 
             if (!isValid) {
                 throw new RuntimeException("Payment signature invalid");
