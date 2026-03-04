@@ -12,7 +12,6 @@ const AdminAdmissionApproval = () => {
   const [discountMap, setDiscountMap] = useState({});
   const [selectedDiscount, setSelectedDiscount] = useState({});
 
-  // ⭐ PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 8;
 
@@ -20,14 +19,14 @@ const AdminAdmissionApproval = () => {
 
   const loadData = async () => {
     try {
-      const resp = await axios.get("/api/modular-registration");
 
+      const resp = await axios.get("/api/modular-registration");
       const sorted = [...resp.data].sort((a, b) => b.id - a.id);
       setData(sorted);
 
-      const temp = {};
+      const tempDiscountMap = {};
+      const tempSelected = {};
 
-      // 🔥 FIXED — LOAD DISCOUNTS USING BATCH + EMAIL
       for (let r of sorted) {
 
         const batchId = r.batch?.id;
@@ -37,58 +36,20 @@ const AdminAdmissionApproval = () => {
 
         const key = `${batchId}_${email}`;
 
-        if (temp[key]) continue;
+        if (!tempDiscountMap[key]) {
 
-        try {
           const d = await axios.get(
             `/api/discounts/batch/${batchId}?email=${email}`
           );
 
-          // ⭐⭐⭐ MAIN FIX
-          const safeDiscounts = (d.data || []).filter(dis => {
-
-            // GROUP must match email
-            if (dis.type === "GROUP") {
-
-              if (!dis.studentEmail) return false;
-
-              const emails = dis.studentEmail
-                .split(",")
-                .map(e => e.trim().toLowerCase());
-
-              return emails.includes(email.toLowerCase());
-            }
-
-            return true;
-          });
-
-          temp[key] = safeDiscounts;
-
-        } catch {
-          temp[key] = [];
+          tempDiscountMap[key] = d.data || [];
         }
+
+        tempSelected[r.id] = "";
       }
 
-      setDiscountMap(temp);
-
-      // ================= PREFILL SELECTED DISCOUNT =================
-
-      const sel = {};
-
-      sorted.forEach(r => {
-
-        const key = `${r.batch?.id}_${r.email}`;
-        const discounts = temp[key] || [];
-
-        const match = discounts.find(d =>
-          d.name === r.discountName ||
-          d.type === r.discountType
-        );
-
-        sel[r.id] = match ? match.id : "";
-      });
-
-      setSelectedDiscount(sel);
+      setDiscountMap(tempDiscountMap);
+      setSelectedDiscount(tempSelected);
 
     } catch {
       toast.error("Failed to load registrations");
@@ -104,8 +65,7 @@ const AdminAdmissionApproval = () => {
   const approve = async (id) => {
     try {
 
-      const discountId =
-        selectedDiscount[id] || "";
+      const discountId = selectedDiscount[id] || "";
 
       const url = discountId
         ? `/api/modular-registration/approve/${id}?discountId=${discountId}`
@@ -151,21 +111,15 @@ const AdminAdmissionApproval = () => {
       r.batch?.batchName?.toLowerCase().includes(search.toLowerCase())
     );
 
-  // ================= PAGINATION =================
-
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
-
-  const startIndex =
-    (currentPage - 1) * rowsPerPage;
-
+  const startIndex = (currentPage - 1) * rowsPerPage;
   const currentData =
     filtered.slice(startIndex, startIndex + rowsPerPage);
 
   // ================= UI =================
 
   return (
-    <div
-      className="container-fluid p-0"
+    <div className="container-fluid p-0"
       style={{
         minHeight: "100vh",
         background:
@@ -184,35 +138,19 @@ const AdminAdmissionApproval = () => {
         <div className="col-md-10 p-4">
 
           {/* HEADER */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.85)",
-              backdropFilter: "blur(15px)",
-              padding: "25px",
-              borderRadius: "20px",
-              boxShadow: "0 15px 40px rgba(0,0,0,0.08)",
-              marginBottom: "15px"
-            }}
-          >
+          <div className="bg-white p-4 rounded-4 shadow-sm mb-3">
 
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h4 className="fw-bold m-0">🎓 Admission Approval Panel</h4>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h4 className="fw-bold m-0">
+                🎓 Admission Approval Panel
+              </h4>
 
-              <div
-                style={{
-                  background: "#4caf50",
-                  color: "white",
-                  padding: "8px 18px",
-                  borderRadius: "30px",
-                  fontWeight: "600"
-                }}
-              >
+              <div className="badge bg-success fs-6 px-3 py-2">
                 Total: {filtered.length}
               </div>
             </div>
 
             <div className="row">
-
               <div className="col-md-8">
                 <input
                   type="text"
@@ -223,7 +161,6 @@ const AdminAdmissionApproval = () => {
                     setSearch(e.target.value);
                     setCurrentPage(1);
                   }}
-                  style={{ borderRadius: "12px" }}
                 />
               </div>
 
@@ -235,7 +172,6 @@ const AdminAdmissionApproval = () => {
                     setStatusFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  style={{ borderRadius: "12px" }}
                 >
                   <option value="ALL">All Status</option>
                   <option value="PENDING">Pending</option>
@@ -243,62 +179,62 @@ const AdminAdmissionApproval = () => {
                   <option value="REJECTED">Rejected</option>
                 </select>
               </div>
-
             </div>
 
           </div>
 
           {/* TABLE */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.85)",
-              backdropFilter: "blur(15px)",
-              padding: "25px",
-              borderRadius: "20px",
-              boxShadow: "0 15px 40px rgba(0,0,0,0.08)"
-            }}
-          >
+          <div className="bg-white p-4 rounded-4 shadow-sm">
 
             <table className="table align-middle">
 
               <thead>
-                <tr className="text-secondary">
-                  <th>SR NO</th>
-                  <th>👤 Student</th>
-                  <th>📧 Email</th>
-                  <th>📚 Batch</th>
-                  <th>💰 Fee</th>
-                  <th>🎁 Discount</th>
+                <tr>
+                  <th>SR</th>
+                  <th>Student</th>
+                  <th>Batch</th>
+                  <th>Original Fee</th>
+                  <th>Final Fee</th>
+                  <th>Applied Discount</th>
+                  <th>Valid Discounts</th>
                   <th>Status</th>
-                  <th className="text-center">Action</th>
+                  <th>Action</th>
                 </tr>
               </thead>
 
               <tbody>
+
                 {currentData.map((r, index) => {
 
                   const key = `${r.batch?.id}_${r.email}`;
                   const discounts = discountMap[key] || [];
 
-                  const hasCombo =
-                    discounts.some(d => d.type === "COMBO");
-
-                  const finalDiscounts =
-                    hasCombo
-                      ? discounts.filter(d => d.type !== "GROUP")
-                      : discounts;
-
                   return (
                     <tr key={r.id}>
+
                       <td>{startIndex + index + 1}</td>
-                      <td>{r.studentName}</td>
-                      <td>{r.email}</td>
+
+                      <td>
+                        <b>{r.studentName}</b>
+                        <br />
+                        <small>{r.email}</small>
+                      </td>
+
                       <td>{r.batch?.batchName}</td>
+
+                      <td>₹ {r.originalFee}</td>
+
                       <td>₹ {r.finalAmount}</td>
 
                       <td>
+                        {r.discountType === "AUTO_APPLIED"
+                          ? "AUTO"
+                          : r.discountType || "-"}
+                      </td>
+
+                      <td>
                         <select
-                          className="form-control form-control-sm"
+                          className="form-select form-select-sm"
                           disabled={r.status !== "PENDING"}
                           value={selectedDiscount[r.id] || ""}
                           onChange={(e) =>
@@ -309,11 +245,26 @@ const AdminAdmissionApproval = () => {
                           }
                         >
                           <option value="">None</option>
-                          {finalDiscounts.map(d => (
-                            <option key={d.id} value={d.id}>
-                              {d.type}
-                            </option>
-                          ))}
+
+                          {discounts.map(d => {
+
+                            const calculatedAmount =
+                              d.mode === "PERCENTAGE"
+                                ? (r.originalFee * d.value) / 100
+                                : d.value;
+
+                            const isAutoMatch =
+                              r.discountType === "AUTO_APPLIED" &&
+                              calculatedAmount === r.discountAmount;
+
+                            return (
+                              <option key={d.id} value={d.id}>
+                                {isAutoMatch
+                                  ? `AUTO → ${d.type}`
+                                  : d.type}
+                              </option>
+                            );
+                          })}
                         </select>
                       </td>
 
@@ -323,34 +274,56 @@ const AdminAdmissionApproval = () => {
                         </span>
                       </td>
 
-                      <td className="text-center">
+                      <td>
                         {r.status === "PENDING" ? (
-                          <>
+                          <div className="dropdown">
+
                             <button
-                              className="btn btn-success btn-sm me-2"
-                              onClick={() => approve(r.id)}
+                              className="btn btn-sm btn-primary dropdown-toggle"
+                              data-bs-toggle="dropdown"
                             >
-                              ✔ Approve
+                              Action
                             </button>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => reject(r.id)}
-                            >
-                              ✖ Reject
-                            </button>
-                          </>
+
+                            <ul className="dropdown-menu">
+
+                              <li>
+                                <button
+                                  className="dropdown-item text-success"
+                                  onClick={() => approve(r.id)}
+                                >
+                                  ✔ Approve
+                                </button>
+                              </li>
+
+                              <li>
+                                <button
+                                  className="dropdown-item text-danger"
+                                  onClick={() => reject(r.id)}
+                                >
+                                  ✖ Reject
+                                </button>
+                              </li>
+
+                            </ul>
+
+                          </div>
                         ) : (
-                          <span className="text-muted">Completed</span>
+                          <span className="text-muted">
+                            Completed
+                          </span>
                         )}
                       </td>
+
                     </tr>
                   );
                 })}
+
               </tbody>
 
             </table>
 
-            {/* ⭐ PAGINATION */}
+            {/* PAGINATION */}
             <div className="d-flex justify-content-center mt-3">
               {Array.from({ length: totalPages }, (_, i) => (
                 <button

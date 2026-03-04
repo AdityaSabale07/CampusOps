@@ -224,7 +224,11 @@ public class DiscountEngine {
                 best.getId(),
                 best.getName(),
                 best.getType(),
-                maxDiscount
+                best.getValue(),
+                best.getMode(),
+                maxDiscount,
+                best.getStartDate(),
+                best.getEndDate()
         );
     }
 }

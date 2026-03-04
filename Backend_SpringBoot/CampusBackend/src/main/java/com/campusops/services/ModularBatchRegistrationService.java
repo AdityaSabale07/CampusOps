@@ -178,6 +178,8 @@ public class ModularBatchRegistrationService {
         dto.setStudentName(reg.getStudentName());
         dto.setEmail(reg.getEmail());
         dto.setStatus(reg.getStatus());
+        dto.setOriginalFee(reg.getOriginalFee());
+        dto.setDiscountAmount(reg.getDiscountAmount());
         dto.setFinalAmount(reg.getFinalAmount());
         dto.setTempPassword(reg.getTempPassword());
         dto.setDiscountName(reg.getDiscountName());

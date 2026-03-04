@@ -6,11 +6,9 @@ const StudentAdmissionRegistration = () => {
 
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
-  const [offers, setOffers] = useState([]);
+  const [bestOffer, setBestOffer] = useState(null);
 
   const [selectedBatchFee, setSelectedBatchFee] = useState(0);
-
-  // ⭐ GROUP MESSAGE FLAG
   const [hasGroupDiscount, setHasGroupDiscount] = useState(false);
 
   const [form, setForm] = useState({
@@ -21,7 +19,7 @@ const StudentAdmissionRegistration = () => {
     batchId: ""
   });
 
-  // ================= LOAD =================
+  // ================= LOAD COURSES =================
 
   const loadCourses = async () => {
     try {
@@ -41,27 +39,30 @@ const StudentAdmissionRegistration = () => {
     }
   };
 
-  // ⭐ FIXED OFFER LOADER
-  const loadOffers = async (batchId, email) => {
+  // ================= LOAD BEST OFFER =================
+
+  const loadBestOffer = async (batchId, email) => {
 
     if (!batchId || !email) {
-      setOffers([]);
+      setBestOffer(null);
       return;
     }
 
     try {
       const resp = await axios.get(
-        `/api/discounts/batch/${batchId}?email=${email}`
+        `/api/discounts/batch/${batchId}/best?email=${email}`
       );
 
-      setOffers(resp.data || []);
+      setBestOffer(resp.data || null);
+
     } catch {
-      setOffers([]);
+      setBestOffer(null);
       toast.error("Failed to load offers");
     }
   };
 
-  // ⭐ CHECK GROUP DISCOUNT
+  // ================= CHECK GROUP DISCOUNT =================
+
   const checkGroupDiscount = async (batchId) => {
     try {
       const resp = await axios.get(
@@ -74,6 +75,7 @@ const StudentAdmissionRegistration = () => {
         );
 
       setHasGroupDiscount(exists);
+
     } catch {
       setHasGroupDiscount(false);
     }
@@ -97,16 +99,18 @@ const StudentAdmissionRegistration = () => {
   // ================= HANDLE CHANGE =================
 
   const handleChange = (e) => {
+
     const { name, value } = e.target;
 
     if (name === "courseId") {
+
       setForm(prev => ({
         ...prev,
         courseId: value,
         batchId: ""
       }));
 
-      setOffers([]);
+      setBestOffer(null);
       setSelectedBatchFee(0);
       setHasGroupDiscount(false);
 
@@ -130,10 +134,10 @@ const StudentAdmissionRegistration = () => {
       }));
 
       if (value) {
-        loadOffers(value, form.email);
+        loadBestOffer(value, form.email);
         checkGroupDiscount(value);
       } else {
-        setOffers([]);
+        setBestOffer(null);
       }
 
       return;
@@ -146,11 +150,10 @@ const StudentAdmissionRegistration = () => {
         email: value
       }));
 
-      // ⭐ LIVE RELOAD OFFERS
       if (form.batchId) {
-        loadOffers(form.batchId, value);
+        loadBestOffer(form.batchId, value);
       } else {
-        setOffers([]);
+        setBestOffer(null);
       }
 
       return;
@@ -187,7 +190,7 @@ const StudentAdmissionRegistration = () => {
         batchId: ""
       });
 
-      setOffers([]);
+      setBestOffer(null);
       setBatches([]);
       setSelectedBatchFee(0);
       setHasGroupDiscount(false);
@@ -197,33 +200,12 @@ const StudentAdmissionRegistration = () => {
     }
   };
 
-  // ================= HELPERS =================
+  // ================= CALCULATIONS =================
 
-  const isPercentage = (o) =>
-    o?.mode === "PERCENTAGE";
-
-  const getOfferLabel = (o) =>
-    isPercentage(o)
-      ? `${o.value}% OFF`
-      : `₹ ${o.value} OFF`;
-
-  const bestOffer =
-    offers.length > 0
-      ? [...offers].sort((a, b) => {
-
-          const aVal =
-            isPercentage(a)
-              ? (selectedBatchFee * a.value) / 100
-              : a.value;
-
-          const bVal =
-            isPercentage(b)
-              ? (selectedBatchFee * b.value) / 100
-              : b.value;
-
-          return bVal - aVal;
-        })[0]
-      : null;
+  // const finalPayable =
+  //   bestOffer
+  //     ? selectedBatchFee - bestOffer.amount
+  //     : selectedBatchFee;
 
   // ================= UI =================
 
@@ -279,44 +261,51 @@ const StudentAdmissionRegistration = () => {
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* ALL YOUR ORIGINAL UI KEPT EXACT SAME */}
-          {/* (unchanged below) */}
 
           <div className="row g-3">
 
             <div className="col-md-6">
               <label className="fw-bold">Student Name</label>
-              <input className="form-control"
+              <input
+                className="form-control"
                 name="studentName"
                 value={form.studentName}
                 onChange={handleChange}
+                required
               />
             </div>
 
             <div className="col-md-6">
               <label className="fw-bold">Email</label>
-              <input className="form-control"
+              <input
+                className="form-control"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
+                required
               />
             </div>
 
             <div className="col-md-6">
               <label className="fw-bold">Phone</label>
-              <input className="form-control"
+              <input
+                className="form-control"
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
+                required
               />
             </div>
 
             <div className="col-md-6">
               <label className="fw-bold">Course</label>
-              <select className="form-control"
+              <select
+                className="form-control"
                 name="courseId"
                 value={form.courseId}
-                onChange={handleChange}>
+                onChange={handleChange}
+                required
+              >
                 <option value="">Choose Course</option>
                 {courses.map(c => (
                   <option key={c.id} value={c.id}>
@@ -334,6 +323,7 @@ const StudentAdmissionRegistration = () => {
                 value={form.batchId}
                 onChange={handleChange}
                 disabled={!form.courseId}
+                required
               >
                 <option value="">Choose Batch</option>
                 {batches.map(b => (
@@ -363,23 +353,46 @@ const StudentAdmissionRegistration = () => {
           }}>
 
             <h6 className="fw-bold mb-2">
-              🎁 Available Offers ({offers.length})
+              🎁 Best Available Offer
             </h6>
 
-            {bestOffer && (
-              <div className="alert alert-success py-2">
-                ⭐ Best Available Offer: {bestOffer.type}
-                {" • "}
-                {getOfferLabel(bestOffer)}
-                <div className="small mt-1">
-                  Valid: {formatDate(bestOffer.startDate)}
-                  {" → "}
-                  {formatDate(bestOffer.endDate)}
+            {bestOffer ? (
+              <div className="alert alert-success py-3">
+
+                <div className="fw-bold">
+                  ⭐ {bestOffer.discountType}
+                  {" • "}
+                  
+                  {bestOffer.mode === "PERCENTAGE"
+                    ? `${bestOffer.value}% OFF`
+                    : `₹ ${bestOffer.value} OFF`}
                 </div>
+
+                <div className="small mt-1">
+                  💰 You Save: ₹ {bestOffer.amount}
+                </div>
+
+                {/* <div className="small">
+                  📌 Type: {bestOffer.discountType}
+                </div> */}
+
+                <div className="small">
+                  📅 Valid: {formatDate(bestOffer.startDate)} → {formatDate(bestOffer.endDate)}
+                </div>
+                <hr />
+
+                {/* <div className="fw-bold text-primary">
+                  Final Payable: ₹ {finalPayable}
+                </div> */}
+
               </div>
+            ) : (
+              <small className="text-muted">
+                No applicable discount available.
+              </small>
             )}
 
-            <small className="text-muted">
+            <small className="text-muted d-block mt-2">
               Discounts will be applied by admin after verification.
             </small>
 

@@ -3,7 +3,8 @@ package com.campusops.models;
 import java.time.LocalDate;
 
 public class AdmissionStatusDTO {
-	private int id;
+
+    private int id;
     private String studentName;
     private String email;
     private String status;
@@ -11,6 +12,9 @@ public class AdmissionStatusDTO {
     private String batchName;
     private String courseName;
 
+    // ⭐ NEW FEE FIELDS (ADDED)
+    private double originalFee;
+    private double discountAmount;
     private double finalAmount;
 
     private String tempPassword;
@@ -22,13 +26,12 @@ public class AdmissionStatusDTO {
     private String discountName;
     private String discountType;
 
-    // ⭐ NEW PAYMENT FIELDS
+    // ⭐ PAYMENT
     private String paymentStatus;
     private LocalDate paymentDueDate;
 
     // ===== GETTERS & SETTERS =====
-  
-    
+
     public int getId() {
         return id;
     }
@@ -36,6 +39,7 @@ public class AdmissionStatusDTO {
     public void setId(int id) {
         this.id = id;
     }
+
     public String getStudentName() {
         return studentName;
     }
@@ -76,6 +80,24 @@ public class AdmissionStatusDTO {
         this.courseName = courseName;
     }
 
+    // ===== FEES =====
+
+    public double getOriginalFee() {
+        return originalFee;
+    }
+
+    public void setOriginalFee(double originalFee) {
+        this.originalFee = originalFee;
+    }
+
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
     public double getFinalAmount() {
         return finalAmount;
     }
@@ -83,6 +105,8 @@ public class AdmissionStatusDTO {
     public void setFinalAmount(double finalAmount) {
         this.finalAmount = finalAmount;
     }
+
+    // ===== TEMP PASSWORD =====
 
     public String getTempPassword() {
         return tempPassword;

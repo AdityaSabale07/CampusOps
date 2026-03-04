@@ -134,7 +134,7 @@ public class DiscountService {
                             today.isAfter(d.getEndDate()))
                         return false;
 
-                    // ===== INDIVIDUAL (always email based) =====
+                    // ===== INDIVIDUAL =====
                     if ("INDIVIDUAL".equalsIgnoreCase(d.getType())) {
 
                         if (d.getStudentEmail() == null ||
@@ -153,13 +153,12 @@ public class DiscountService {
                         return false;
                     }
 
-                    // ===== GROUP LOGIC (FIXED) =====
-                    // if email list empty → show to ALL (announcement)
+                    // ===== GROUP =====
                     if ("GROUP".equalsIgnoreCase(d.getType())) {
 
                         if (d.getStudentEmail() == null ||
                                 d.getStudentEmail().isBlank()) {
-                            return true; // ⭐ MAIN FIX
+                            return true;
                         }
 
                         String[] emails =
@@ -174,7 +173,17 @@ public class DiscountService {
                         return false;
                     }
 
-                    // other discount types visible to everyone
+                    // ===== LOYALTY  🔥 FIX ADDED =====
+                    if ("LOYALTY".equalsIgnoreCase(d.getType())) {
+
+                        // Student must have previous APPROVED registration
+                        boolean hasPrevious =
+                                regRepo.existsByEmailAndStatus(email, "APPROVED");
+
+                        return hasPrevious;
+                    }
+
+                    // EARLY_BIRD and other open discounts
                     return true;
                 })
 
@@ -184,15 +193,14 @@ public class DiscountService {
                         d.getType(),
                         d.getDescription(),
                         d.getValue(),
-                        d.getStudentEmail(),
+                        d.getMode(),
                         d.getStartDate(),
                         d.getEndDate()
                 ))
                 .toList();
     }
 
-    // ================= ⭐ ADMIN VIEW (NO FILTER) =================
-    // 🔥 ADDED FOR APPROVAL PAGE
+    // ================= ADMIN VIEW =================
 
     public List<DiscountDTO> getDiscountsByBatchForAdmin(int batchId) {
 
@@ -222,7 +230,7 @@ public class DiscountService {
                         d.getType(),
                         d.getDescription(),
                         d.getValue(),
-                        d.getStudentEmail(),
+                        d.getMode(),
                         d.getStartDate(),
                         d.getEndDate()
                 ))
@@ -270,10 +278,16 @@ public class DiscountService {
                 best.getId(),
                 best.getName(),
                 best.getType(),
-                max
+                best.getValue(),
+                best.getMode(),
+                max,
+                best.getStartDate(),
+                best.getEndDate()
         );
     }
 }
+
+
 
 
 
@@ -311,7 +325,7 @@ public class DiscountService {
 //
 //    @Autowired
 //    private ModularBatchRegistrationRepository regRepo;
-//    
+//
 //    @Autowired
 //    private DiscountEngine discountEngine;
 //
@@ -395,7 +409,7 @@ public class DiscountService {
 //                .toList();
 //    }
 //
-//    // ================= GET DISCOUNTS BY BATCH =================
+//    // ================= STUDENT VIEW (FILTERED) =================
 //
 //    public List<DiscountDTO> getDiscountsByBatch(int batchId, String email) {
 //
@@ -417,16 +431,13 @@ public class DiscountService {
 //                            today.isAfter(d.getEndDate()))
 //                        return false;
 //
-//                    // ===== EMAIL BASED FILTER =====
-//                    // GROUP & INDIVIDUAL visible only to selected students
-//                    if ("GROUP".equalsIgnoreCase(d.getType())
-//                            || "INDIVIDUAL".equalsIgnoreCase(d.getType())) {
+//                    // ===== INDIVIDUAL (always email based) =====
+//                    if ("INDIVIDUAL".equalsIgnoreCase(d.getType())) {
 //
 //                        if (d.getStudentEmail() == null ||
 //                                d.getStudentEmail().isBlank())
 //                            return false;
 //
-//                        // admin may save comma separated emails
 //                        String[] emails =
 //                                d.getStudentEmail().split(",");
 //
@@ -439,7 +450,28 @@ public class DiscountService {
 //                        return false;
 //                    }
 //
-//                    // other discounts visible to everyone
+//                    // ===== GROUP LOGIC (FIXED) =====
+//                    // if email list empty → show to ALL (announcement)
+//                    if ("GROUP".equalsIgnoreCase(d.getType())) {
+//
+//                        if (d.getStudentEmail() == null ||
+//                                d.getStudentEmail().isBlank()) {
+//                            return true; // ⭐ MAIN FIX
+//                        }
+//
+//                        String[] emails =
+//                                d.getStudentEmail().split(",");
+//
+//                        for (String e : emails) {
+//                            if (e.trim().equalsIgnoreCase(email)) {
+//                                return true;
+//                            }
+//                        }
+//
+//                        return false;
+//                    }
+//
+//                    // other discount types visible to everyone
 //                    return true;
 //                })
 //
@@ -455,7 +487,47 @@ public class DiscountService {
 //                ))
 //                .toList();
 //    }
-//    
+//
+//    // ================= ⭐ ADMIN VIEW (NO FILTER) =================
+//    // 🔥 ADDED FOR APPROVAL PAGE
+//
+//    public List<DiscountDTO> getDiscountsByBatchForAdmin(int batchId) {
+//
+//        LocalDate today = LocalDate.now();
+//
+//        List<Discount> discounts =
+//                discountRepo.findByBatch_Id(batchId);
+//
+//        return discounts.stream()
+//
+//                .filter(d -> {
+//
+//                    if (d.getStartDate() != null &&
+//                            today.isBefore(d.getStartDate()))
+//                        return false;
+//
+//                    if (d.getEndDate() != null &&
+//                            today.isAfter(d.getEndDate()))
+//                        return false;
+//
+//                    return true;
+//                })
+//
+//                .map(d -> new DiscountDTO(
+//                        d.getId(),
+//                        d.getName(),
+//                        d.getType(),
+//                        d.getDescription(),
+//                        d.getValue(),
+//                        d.getStudentEmail(),
+//                        d.getStartDate(),
+//                        d.getEndDate()
+//                ))
+//                .toList();
+//    }
+//
+//    // ================= BEST DISCOUNT =================
+//
 //    public BestDiscountResult getBestDiscount(
 //            int batchId,
 //            String email) {
@@ -464,7 +536,6 @@ public class DiscountService {
 //                .orElseThrow(() ->
 //                        new RuntimeException("Batch not found"));
 //
-//        // create temporary registration object
 //        ModularBatchRegistration reg =
 //                new ModularBatchRegistration();
 //
@@ -500,3 +571,10 @@ public class DiscountService {
 //        );
 //    }
 //}
+
+
+
+
+
+
+

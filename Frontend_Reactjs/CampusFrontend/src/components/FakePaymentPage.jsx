@@ -73,7 +73,8 @@ const FakePaymentPage = () => {
       className="d-flex justify-content-center align-items-center"
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg,#0d6efd,#4f46e5)"
+        background:
+          "linear-gradient(-45deg,#e3f2fd,#b2dfdb,#e1f5fe,#dcedc8)"
       }}
     >
 

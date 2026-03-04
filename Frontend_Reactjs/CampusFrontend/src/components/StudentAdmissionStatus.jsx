@@ -8,10 +8,16 @@ const StudentAdmissionStatus = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ===== CHECK STATUS =====
+  const formatDate = (date) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  };
 
   const checkStatus = async () => {
-
     if (!email.trim()) {
       toast.error("Enter email");
       return;
@@ -19,13 +25,10 @@ const StudentAdmissionStatus = () => {
 
     try {
       setLoading(true);
-
       const resp = await axios.get(
         `/api/modular-registration/status/email/${email}`
       );
-
       setData(resp.data);
-
     } catch {
       toast.error("No admission found");
       setData(null);
@@ -34,96 +37,81 @@ const StudentAdmissionStatus = () => {
     }
   };
 
-  // ===== PAYMENT (FAKE PAYMENT MODE) =====
-
-  const handlePayment = async () => {
-
-    try {
-
-      // ⭐ directly call verify (simulate payment success)
-      await axios.post("/api/payment/verify", {
-        registrationId: data.id,
-        razorpayOrderId: "TEST_ORDER",
-        razorpayPaymentId: "TEST_PAYMENT",
-        razorpaySignature: "TEST_SIGN"
-      });
-
-      toast.success("Payment Successful 🎉");
-
-      // refresh latest status
-      checkStatus();
-
-    } catch (err) {
-      toast.error(err.response?.data || "Payment failed");
-    }
-  };
-
-  // ===== BADGE =====
-
   const badge = (status) => {
-    if (status === "APPROVED") return "badge bg-success";
-    if (status === "REJECTED") return "badge bg-danger";
-    return "badge bg-warning text-dark";
+    if (status === "APPROVED")
+      return "badge bg-success px-4 py-2";
+    if (status === "REJECTED")
+      return "badge bg-danger px-4 py-2";
+    return "badge bg-warning text-dark px-4 py-2";
   };
-
-  // ===== UI =====
 
   return (
-
     <div
-      className="container-fluid p-0 d-flex justify-content-center align-items-center"
+      className="d-flex justify-content-center align-items-start"
       style={{
         minHeight: "100vh",
+        paddingTop: "60px",
+        paddingBottom: "60px",
         background:
           "linear-gradient(-45deg,#e3f2fd,#b2dfdb,#e1f5fe,#dcedc8)",
         backgroundSize: "400% 400%",
         animation: "gradientMove 12s ease infinite"
       }}
     >
-
       <div
         style={{
           width: "100%",
-          maxWidth: "650px",
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(15px)",
-          padding: "25px",
-          borderRadius: "20px",
-          boxShadow: "0 15px 40px rgba(0,0,0,0.12)"
+          maxWidth: "760px",
+          background: "white",
+          borderRadius: "18px",
+          padding: "32px",
+          border: "1px solid #e6e9ef",
+          boxShadow: "0 18px 45px rgba(0,0,0,0.08)"
         }}
       >
 
-        <h4 className="fw-bold text-center mb-3">
-          📊 Admission Status Checker
-        </h4>
+        {/* HEADER */}
+        <div className="text-center mb-3">
+          <h4 className="fw-bold m-0">📊 Admission Status</h4>
+          <small className="text-muted">
+            Check your admission & payment details
+          </small>
+        </div>
 
-        <div className="row align-items-end mb-3">
+        {/* EMAIL + BUTTON */}
+        <div className="row align-items-end mb-2">
 
           <div className="col-md-8">
-            <label className="fw-bold mb-1">Email</label>
+            <label className="fw-bold mb-1">📧 Registered Email</label>
             <input
               type="email"
               className="form-control"
-              placeholder="Enter registered email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ borderRadius: "10px" }}
+              style={{
+                borderRadius: "8px",
+                border: "1px solid #dfe3e8"
+              }}
             />
           </div>
 
-          <div className="col-md-4">
+          <div className="col-md-4 d-grid">
             <button
-              className="btn btn-primary w-100"
+              className="btn btn-primary"
               onClick={checkStatus}
               disabled={loading}
-              style={{ borderRadius: "10px" }}
+              style={{
+                borderRadius: "8px",
+                boxShadow: "0 4px 12px rgba(0,123,255,0.25)"
+              }}
             >
-              {loading ? "Checking..." : "🔍 Check"}
+              {loading ? "Checking..." : "🔍 Check Status"}
             </button>
           </div>
 
         </div>
 
+        {/* BACK BUTTON */}
         <div className="text-center mb-3">
           <button
             className="btn btn-outline-secondary btn-sm"
@@ -133,112 +121,147 @@ const StudentAdmissionStatus = () => {
           </button>
         </div>
 
-        {/* ===== RESULT ===== */}
-
+        {/* RESULT */}
         {data && (
 
-          <div className="mt-3 border rounded p-3">
+          <div>
 
-            <h6 className="fw-bold mb-3">
-              🎓 Admission Details
-            </h6>
-
-            <div><b>Registration ID:</b> {data.registrationId || "-"}</div>
-            <div><b>Name:</b> {data.studentName}</div>
-            <div><b>Email:</b> {data.email}</div>
-            <div><b>Batch:</b> {data.batchName || "-"}</div>
-            <div><b>Final Fee:</b> ₹ {data.finalAmount}</div>
-
-            {data.discountName && (
-              <div>
-                <b>Discount:</b> {data.discountName} ({data.discountType})
-              </div>
-            )}
-
-            {/* ⭐ PAYMENT INFO */}
-            {data.paymentStatus && (
-              <div>
-                <b>Payment Status:</b> {data.paymentStatus}
-              </div>
-            )}
-
-            {data.paymentDueDate && (
-              <div>
-                <b>Payment Due Date:</b> {data.paymentDueDate}
-              </div>
-            )}
-
-            <div className="mt-2">
+            {/* STATUS BADGE */}
+            <div className="text-center mb-3">
               <span className={badge(data.status)}>
                 {data.status}
               </span>
             </div>
 
-            {/* ===== APPROVED ===== */}
-            {data.status === "APPROVED" && data.paymentStatus === "PENDING" && (
-              <div className="alert alert-info mt-3 mb-0">
+            {/* TWO COLUMN DETAILS */}
+            <div className="row g-3">
 
-                <b>💳 Admission Approved — Payment Pending</b>
-
-                <button
-                  className="btn btn-primary btn-sm mt-3"
-                 onClick={() =>
-  window.location.href = `/fake-payment/${data.id}`
-}
+              <div className="col-md-6">
+                <div
+                  className="p-3"
+                  style={{
+                    border: "1px solid #e6e9ef",
+                    borderRadius: "12px",
+                    background: "#fafbfc"
+                  }}
                 >
-                  💰 Pay Now
-                </button>
+                  <h6 className="fw-bold mb-2">🎓 Admission Info</h6>
 
-              </div>
-            )}
-
-            {/* ===== AFTER PAYMENT ===== */}
-            {data.status === "APPROVED" && data.paymentStatus === "PAID" && (
-              <div className="alert alert-success mt-3 mb-0">
-
-                <b>🎉 Payment Successful</b>
-
-                <div className="mt-2">
-                  <div><b>Login Email:</b> {data.email}</div>
-                  <div><b>Password:</b> {data.tempPassword || "welcome123"}</div>
+                  <div><b>👤 Name:</b> {data.studentName}</div>
+                  <div><b>📧 Email:</b> {data.email}</div>
+                  <div><b>🆔 Reg ID:</b> {data.registrationId || "-"}</div>
+                  <div><b>📚 Batch:</b> {data.batchName || "-"}</div>
                 </div>
-
-                <button
-                  className="btn btn-success btn-sm mt-3"
-                  onClick={() => window.location.href = "/"}
-                >
-                  🔐 Go to Login
-                </button>
-
               </div>
-            )}
 
-            {/* ===== PENDING ===== */}
-            {data.status === "PENDING" && (
-              <div className="alert alert-warning mt-3 mb-0">
-                ⏳ Under Review
-                <br />
-                <button
-                  className="btn btn-warning btn-sm mt-2"
-                  onClick={checkStatus}
+              <div className="col-md-6">
+                <div
+                  className="p-3"
+                  style={{
+                    border: "1px solid #e6e9ef",
+                    borderRadius: "12px",
+                    background: "#fafbfc"
+                  }}
                 >
-                  🔄 Refresh
-                </button>
+                  <h6 className="fw-bold mb-2">💰 Fee Details</h6>
+
+                  <div><b>Original:</b> ₹ {data.originalFee || "-"}</div>
+
+                  <div>
+                    <b>
+                      {data.status === "PENDING"
+                        ? "Estimated Discount"
+                        : "Discount"}:
+                    </b>{" "}
+                    ₹ {data.discountAmount || 0}
+                  </div>
+
+                  <div>
+                    <b>
+                      {data.status === "PENDING"
+                        ? "Estimated Final"
+                        : "Final Payable"}:
+                    </b>{" "}
+                    ₹ {data.finalAmount}
+                  </div>
+
+                  {data.discountName && (
+                    <div>
+                      <b>🎁 Type:</b> {data.discountName} ({data.discountType})
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
 
-            {/* ===== REJECTED ===== */}
-            {data.status === "REJECTED" && (
-              <div className="alert alert-danger mt-3 mb-0">
-                ❌ Admission Rejected
-                <br />
-                <button
-                  className="btn btn-danger btn-sm mt-2"
-                  onClick={() =>
-                    window.location.href = "/admission/register"}
-                >
-                  📝 Apply Again
-                </button>
+            </div>
+
+            {/* PAYMENT SECTION */}
+            {(data.paymentStatus || data.status === "APPROVED") && (
+              <div
+                className="mt-3 p-3"
+                style={{
+                  border: "1px solid #e6e9ef",
+                  borderRadius: "12px",
+                  background: "#fafbfc"
+                }}
+              >
+
+                <h6 className="fw-bold mb-2">💳 Payment Info</h6>
+
+                {data.paymentStatus && (
+                  <div><b>Status:</b> {data.paymentStatus}</div>
+                )}
+
+                {data.paymentDueDate && (
+                  <div><b>Due Date:</b> {formatDate(data.paymentDueDate)}</div>
+                )}
+
+                {data.status === "APPROVED" &&
+                  data.paymentStatus === "PENDING" && (
+                    <button
+                      className="btn btn-primary btn-sm mt-2"
+                      onClick={() =>
+                        window.location.href = `/fake-payment/${data.id}`
+                      }
+                    >
+                      💰 Pay Now
+                    </button>
+                  )}
+
+                {data.status === "APPROVED" &&
+                  data.paymentStatus === "PAID" && (
+                    <div className="alert alert-success mt-2 mb-0">
+                      🎉 Payment Successful
+                      <div>
+                        <b>Email:</b> {data.email}
+                      </div>
+                      <div>
+                        <b>Password:</b>{" "}
+                        {data.tempPassword || "welcome123"}
+                      </div>
+                      <button
+                        className="btn btn-success btn-sm mt-2"
+                        onClick={() => window.location.href = "/"}
+                      >
+                        🔐 Login
+                      </button>
+                    </div>
+                  )}
+
+                {data.status === "REJECTED" && (
+                  <div className="alert alert-danger mt-2 mb-0">
+                    ❌ Admission Rejected
+                    <button
+                      className="btn btn-danger btn-sm mt-2"
+                      onClick={() =>
+                        window.location.href =
+                          "/admission/register"}
+                    >
+                      📝 Apply Again
+                    </button>
+                  </div>
+                )}
+
               </div>
             )}
 
@@ -246,6 +269,18 @@ const StudentAdmissionStatus = () => {
         )}
 
       </div>
+
+      {/* Gradient Animation */}
+      <style>
+        {`
+        @keyframes gradientMove {
+          0% {background-position: 0% 50%;}
+          50% {background-position: 100% 50%;}
+          100% {background-position: 0% 50%;}
+        }
+      `}
+      </style>
+
     </div>
   );
 };
