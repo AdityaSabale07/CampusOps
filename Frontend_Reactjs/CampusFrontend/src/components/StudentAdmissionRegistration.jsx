@@ -250,7 +250,7 @@ const StudentAdmissionRegistration = () => {
               <>
                 👥 <strong>Group Discount Available!</strong>
                 <br />
-                Contact admin if you are registering with a group.
+                Contact admin if you are registering with a group of minimum 5 people.
               </>
             ) : (
               <>

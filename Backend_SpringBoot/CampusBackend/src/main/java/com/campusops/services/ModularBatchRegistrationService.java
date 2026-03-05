@@ -125,17 +125,14 @@ public class ModularBatchRegistrationService {
             reg.setDiscountType(discount.getType());
         }
 
-        // ===== NEW PAYMENT FLOW =====
+        // ===== PAYMENT FLOW =====
         reg.setStatus("APPROVED");
         reg.setPaymentStatus("PENDING");
         reg.setPaymentDueDate(LocalDate.now().plusDays(5));
 
-        // login only after payment
         reg.setTempPassword(null);
 
         regRepo.save(reg);
-
-        // user creation moved after payment
     }
 
     public void rejectRegistration(int id) {
@@ -166,39 +163,48 @@ public class ModularBatchRegistrationService {
 
     // ================= STATUS BY EMAIL =================
 
-    public AdmissionStatusDTO getStatusByEmail(String email) {
+    public List<AdmissionStatusDTO> getStatusByEmail(String email) {
 
-        ModularBatchRegistration reg =
-                regRepo.findTopByEmailOrderByIdDesc(email)
-                        .orElseThrow(() ->
-                                new RuntimeException("No admission found"));
+        List<ModularBatchRegistration> regs =
+                regRepo.findByEmailOrderByIdDesc(email);
 
-        AdmissionStatusDTO dto = new AdmissionStatusDTO();
-        dto.setId(reg.getId());
-        dto.setStudentName(reg.getStudentName());
-        dto.setEmail(reg.getEmail());
-        dto.setStatus(reg.getStatus());
-        dto.setOriginalFee(reg.getOriginalFee());
-        dto.setDiscountAmount(reg.getDiscountAmount());
-        dto.setFinalAmount(reg.getFinalAmount());
-        dto.setTempPassword(reg.getTempPassword());
-        dto.setDiscountName(reg.getDiscountName());
-        dto.setDiscountType(reg.getDiscountType());
-        dto.setRegistrationId(reg.getRegistrationId());
+        if (regs.isEmpty())
+            throw new RuntimeException("No admission found");
 
-        // ⭐ NEW PAYMENT INFO
-        dto.setPaymentStatus(reg.getPaymentStatus());
-        dto.setPaymentDueDate(reg.getPaymentDueDate());
+        return regs.stream().map(reg -> {
 
-        if (reg.getBatch() != null) {
-            dto.setBatchName(reg.getBatch().getBatchName());
+            AdmissionStatusDTO dto = new AdmissionStatusDTO();
 
-            if (reg.getBatch().getCourse() != null)
-                dto.setCourseName(
-                        reg.getBatch().getCourse().getCoursename());
-        }
+            dto.setId(reg.getId());
+            dto.setStudentName(reg.getStudentName());
+            dto.setEmail(reg.getEmail());
+            dto.setStatus(reg.getStatus());
 
-        return dto;
+            dto.setOriginalFee(reg.getOriginalFee());
+            dto.setDiscountAmount(reg.getDiscountAmount());
+            dto.setFinalAmount(reg.getFinalAmount());
+
+            dto.setTempPassword(reg.getTempPassword());
+            dto.setDiscountName(reg.getDiscountName());
+            dto.setDiscountType(reg.getDiscountType());
+
+            dto.setRegistrationId(reg.getRegistrationId());
+
+            dto.setPaymentStatus(reg.getPaymentStatus());
+            dto.setPaymentDueDate(reg.getPaymentDueDate());
+
+            if (reg.getBatch() != null) {
+
+                dto.setBatchName(reg.getBatch().getBatchName());
+
+                if (reg.getBatch().getCourse() != null)
+                    dto.setCourseName(
+                            reg.getBatch().getCourse().getCoursename());
+            }
+
+            return dto;
+
+        }).toList();
     }
 
     // ================= REPORT =================
@@ -261,47 +267,42 @@ public class ModularBatchRegistrationService {
 
         List<ModularBatchRegistration> all =
                 regRepo.findAll();
-        
-        
+
         AdminDashboardDTO dto = new AdminDashboardDTO();
-        
-     // ================= COURSE ANALYTICS =================
-        
-                List<CourseAnalyticsDTO> courseStats =
-                        all.stream()
-                           .filter(r ->
-                                   r.getBatch() != null &&
-                                   r.getBatch().getCourse() != null)
-                           .collect(java.util.stream.Collectors.groupingBy(
-                                   r -> r.getBatch()
-                                         .getCourse()
-                                         .getCoursename()))
-                           .entrySet()
-                           .stream()
-                           .map(e -> {
-        
-                               CourseAnalyticsDTO c =
-                                       new CourseAnalyticsDTO();
-        
-                               c.setCourseName(e.getKey());
-                               c.setTotalRegistrations(
-                                       e.getValue().size());
-        
-                               double revenue =
-                                       e.getValue().stream()
-                                               .mapToDouble(
-                                                   ModularBatchRegistration::getFinalAmount)
-                                               .sum();
-        
-                               c.setTotalRevenue(revenue);
-        
-                               return c;
-                           })
-                           .toList();
-        
-                dto.setCourseAnalytics(courseStats);
-                
-        
+
+        List<CourseAnalyticsDTO> courseStats =
+                all.stream()
+                        .filter(r ->
+                                r.getBatch() != null &&
+                                        r.getBatch().getCourse() != null)
+                        .collect(java.util.stream.Collectors.groupingBy(
+                                r -> r.getBatch()
+                                        .getCourse()
+                                        .getCoursename()))
+                        .entrySet()
+                        .stream()
+                        .map(e -> {
+
+                            CourseAnalyticsDTO c =
+                                    new CourseAnalyticsDTO();
+
+                            c.setCourseName(e.getKey());
+                            c.setTotalRegistrations(
+                                    e.getValue().size());
+
+                            double revenue =
+                                    e.getValue().stream()
+                                            .mapToDouble(
+                                                    ModularBatchRegistration::getFinalAmount)
+                                            .sum();
+
+                            c.setTotalRevenue(revenue);
+
+                            return c;
+                        })
+                        .toList();
+
+        dto.setCourseAnalytics(courseStats);
 
         dto.setTotalRegistrations(all.size());
 
@@ -337,7 +338,7 @@ public class ModularBatchRegistrationService {
         return dto;
     }
 
-    // ================= USER CREATION (KEPT SAFE) =================
+    // ================= USER CREATION =================
 
     public void createUserFromRegistration(ModularBatchRegistration reg) {
 
@@ -363,9 +364,13 @@ public class ModularBatchRegistrationService {
 
     public StudentDashboardDTO getStudentDashboard(String email) {
 
-        ModularBatchRegistration reg =
-                regRepo.findTopByEmailOrderByIdDesc(email)
-                        .orElseThrow(() -> new RuntimeException("No registration found"));
+        List<ModularBatchRegistration> regs =
+                regRepo.findByEmailOrderByIdDesc(email);
+
+        if (regs.isEmpty())
+            throw new RuntimeException("No registration found");
+
+        ModularBatchRegistration reg = regs.get(0);
 
         StudentDashboardDTO dto = new StudentDashboardDTO();
 
@@ -389,4 +394,3 @@ public class ModularBatchRegistrationService {
         return dto;
     }
 }
-

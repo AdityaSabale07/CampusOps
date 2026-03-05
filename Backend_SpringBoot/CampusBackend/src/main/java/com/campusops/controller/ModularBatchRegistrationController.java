@@ -1,10 +1,13 @@
 package com.campusops.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.campusops.models.AdmissionStatusDTO;
 import com.campusops.models.ModularBatchRegistrationDTO;
 import com.campusops.services.ModularBatchRegistrationService;
 
@@ -91,7 +94,7 @@ public class ModularBatchRegistrationController {
     // ================= STUDENT STATUS CHECK =================
 
     @GetMapping("/status/email/{email}")
-    public ResponseEntity<?> checkStatusByEmail(
+    public ResponseEntity<List<AdmissionStatusDTO>> checkStatusByEmail(
             @PathVariable String email) {
 
         return ResponseEntity.ok(
@@ -108,5 +111,3 @@ public class ModularBatchRegistrationController {
                 regService.getAdminDashboard());
     }
 }
-
-

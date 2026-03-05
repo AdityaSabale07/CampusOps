@@ -217,7 +217,7 @@ const AdminNav = () => {
                         <Link to="/batches" className="nav-link"
                             style={subNavStyle(isActive("/batches"))}
                             onClick={closeAllDropdowns}>
-                            🕒 Batches
+                            🕒New Batch Registrtion
                         </Link>
 
                         <Link to="/admin/discount-analytics" className="nav-link"

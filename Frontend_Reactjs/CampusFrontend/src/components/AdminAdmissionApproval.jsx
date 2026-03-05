@@ -13,14 +13,16 @@ const AdminAdmissionApproval = () => {
   const [selectedDiscount, setSelectedDiscount] = useState({});
 
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 8;
+  const rowsPerPage = 6;
 
   // ================= LOAD DATA =================
 
   const loadData = async () => {
+
     try {
 
       const resp = await axios.get("/api/modular-registration");
+
       const sorted = [...resp.data].sort((a, b) => b.id - a.id);
       setData(sorted);
 
@@ -45,56 +47,109 @@ const AdminAdmissionApproval = () => {
           tempDiscountMap[key] = d.data || [];
         }
 
-        tempSelected[r.id] = "";
+        if (r.discountType !== "AUTO_APPLIED") {
+
+          const discounts = tempDiscountMap[key] || [];
+
+          const match = discounts.find(
+            d => d.name === r.discountName
+          );
+
+          tempSelected[r.id] = match ? match.id : "";
+
+        } else {
+
+          tempSelected[r.id] = "";
+
+        }
+
       }
 
       setDiscountMap(tempDiscountMap);
       setSelectedDiscount(tempSelected);
 
     } catch {
+
       toast.error("Failed to load registrations");
+
     }
+
   };
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // ================= ACTIONS =================
+  // ================= APPROVE =================
 
-  const approve = async (id) => {
+  const approve = async (r) => {
+
     try {
 
-      const discountId = selectedDiscount[id] || "";
+      const discountId = selectedDiscount[r.id] || "";
+
+      const key = `${r.batch?.id}_${r.email}`;
+      const discounts = discountMap[key] || [];
+
+      const selected = discounts.find(
+        d => d.id == discountId
+      );
+
+      // ⚠ WARNING IF DISCOUNT MAY BE INVALID
+      if (selected && (selected.type === "GROUP" || selected.type === "COMBO")) {
+
+        const confirmApply = window.confirm(
+          `⚠ ${selected.type} discount may not be valid for this student.\n\nApply anyway?`
+        );
+
+        if (!confirmApply) return;
+
+      }
 
       const url = discountId
-        ? `/api/modular-registration/approve/${id}?discountId=${discountId}`
-        : `/api/modular-registration/approve/${id}`;
+        ? `/api/modular-registration/approve/${r.id}?discountId=${discountId}`
+        : `/api/modular-registration/approve/${r.id}`;
 
       await axios.put(url);
 
       toast.success("Admission approved");
+
       loadData();
 
     } catch {
+
       toast.error("Approve failed");
+
     }
+
   };
 
+  // ================= REJECT =================
+
   const reject = async (id) => {
+
     try {
+
       await axios.put(`/api/modular-registration/reject/${id}`);
+
       toast.success("Admission rejected");
+
       loadData();
+
     } catch {
+
       toast.error("Reject failed");
+
     }
+
   };
 
   const badge = (status) => {
+
     if (status === "APPROVED") return "badge bg-success";
     if (status === "REJECTED") return "badge bg-danger";
     return "badge bg-warning text-dark";
+
   };
 
   // ================= FILTER =================
@@ -113,13 +168,16 @@ const AdminAdmissionApproval = () => {
 
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
+
   const currentData =
     filtered.slice(startIndex, startIndex + rowsPerPage);
 
   // ================= UI =================
 
   return (
-    <div className="container-fluid p-0"
+
+    <div
+      className="container-fluid p-0"
       style={{
         minHeight: "100vh",
         background:
@@ -138,9 +196,11 @@ const AdminAdmissionApproval = () => {
         <div className="col-md-10 p-4">
 
           {/* HEADER */}
+
           <div className="bg-white p-4 rounded-4 shadow-sm mb-3">
 
             <div className="d-flex justify-content-between align-items-center mb-3">
+
               <h4 className="fw-bold m-0">
                 🎓 Admission Approval Panel
               </h4>
@@ -148,9 +208,11 @@ const AdminAdmissionApproval = () => {
               <div className="badge bg-success fs-6 px-3 py-2">
                 Total: {filtered.length}
               </div>
+
             </div>
 
             <div className="row">
+
               <div className="col-md-8">
                 <input
                   type="text"
@@ -165,6 +227,7 @@ const AdminAdmissionApproval = () => {
               </div>
 
               <div className="col-md-4">
+
                 <select
                   className="form-control"
                   value={statusFilter}
@@ -173,22 +236,28 @@ const AdminAdmissionApproval = () => {
                     setCurrentPage(1);
                   }}
                 >
+
                   <option value="ALL">All Status</option>
                   <option value="PENDING">Pending</option>
                   <option value="APPROVED">Approved</option>
                   <option value="REJECTED">Rejected</option>
+
                 </select>
+
               </div>
+
             </div>
 
           </div>
 
           {/* TABLE */}
+
           <div className="bg-white p-4 rounded-4 shadow-sm">
 
             <table className="table align-middle">
 
               <thead>
+
                 <tr>
                   <th>SR</th>
                   <th>Student</th>
@@ -200,6 +269,7 @@ const AdminAdmissionApproval = () => {
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
+
               </thead>
 
               <tbody>
@@ -210,6 +280,7 @@ const AdminAdmissionApproval = () => {
                   const discounts = discountMap[key] || [];
 
                   return (
+
                     <tr key={r.id}>
 
                       <td>{startIndex + index + 1}</td>
@@ -226,46 +297,80 @@ const AdminAdmissionApproval = () => {
 
                       <td>₹ {r.finalAmount}</td>
 
-                      <td>
-                        {r.discountType === "AUTO_APPLIED"
-                          ? "AUTO"
-                          : r.discountType || "-"}
-                      </td>
+  <td className="text-center">
+
+  {r.discountType === "AUTO_APPLIED" ? (
+    <span
+      className="badge bg-primary"
+      style={{
+        minWidth: "120px",
+        padding: "6px 12px"
+      }}
+    >
+      AUTO
+    </span>
+
+  ) : r.discountType ? (
+
+    <span
+      className="badge bg-info"
+      style={{
+        minWidth: "120px",
+        padding: "6px 12px"
+      }}
+    >
+      {r.discountType}
+    </span>
+
+  ) : (
+
+    <span
+      className="badge bg-secondary"
+      style={{
+        minWidth: "120px",
+        padding: "6px 12px"
+      }}
+    >
+      NOT APPLICABLE
+    </span>
+
+  )}
+
+</td>
 
                       <td>
-                        <select
-                          className="form-select form-select-sm"
-                          disabled={r.status !== "PENDING"}
-                          value={selectedDiscount[r.id] || ""}
-                          onChange={(e) =>
-                            setSelectedDiscount(prev => ({
-                              ...prev,
-                              [r.id]: e.target.value
-                            }))
-                          }
-                        >
-                          <option value="">None</option>
 
-                          {discounts.map(d => {
+                       <select
+  className="form-select form-select-sm"
+  disabled={r.status !== "PENDING"}
+  value={selectedDiscount[r.id] || ""}
+  onChange={(e) =>
+    setSelectedDiscount(prev => ({
+      ...prev,
+      [r.id]: e.target.value
+    }))
+  }
+>
 
-                            const calculatedAmount =
-                              d.mode === "PERCENTAGE"
-                                ? (r.originalFee * d.value) / 100
-                                : d.value;
+  <option value="">None</option>
 
-                            const isAutoMatch =
-                              r.discountType === "AUTO_APPLIED" &&
-                              calculatedAmount === r.discountAmount;
+  {discounts.map((d, index) => {
 
-                            return (
-                              <option key={d.id} value={d.id}>
-                                {isAutoMatch
-                                  ? `AUTO → ${d.type}`
-                                  : d.type}
-                              </option>
-                            );
-                          })}
-                        </select>
+    const isAuto =
+      r.discountType === "AUTO_APPLIED" && index === 0;
+
+    return (
+      <option key={d.id} value={d.id}>
+        
+        {d.type} - {d.name}
+        {isAuto ? " (AUTO)" : ""}
+      </option>
+    );
+
+  })}
+
+</select>
+
                       </td>
 
                       <td>
@@ -274,49 +379,63 @@ const AdminAdmissionApproval = () => {
                         </span>
                       </td>
 
+                      {/* PREMIUM ACTION MENU */}
+
                       <td>
+
                         {r.status === "PENDING" ? (
+
                           <div className="dropdown">
 
                             <button
-                              className="btn btn-sm btn-primary dropdown-toggle"
+                              className="btn btn-light border rounded-circle"
                               data-bs-toggle="dropdown"
                             >
-                              Action
+                              ⋮
                             </button>
 
                             <ul className="dropdown-menu">
 
                               <li>
+
                                 <button
                                   className="dropdown-item text-success"
-                                  onClick={() => approve(r.id)}
+                                  onClick={() => approve(r)}
                                 >
                                   ✔ Approve
                                 </button>
+
                               </li>
 
                               <li>
+
                                 <button
                                   className="dropdown-item text-danger"
                                   onClick={() => reject(r.id)}
                                 >
                                   ✖ Reject
                                 </button>
+
                               </li>
 
                             </ul>
 
                           </div>
+
                         ) : (
+
                           <span className="text-muted">
                             Completed
                           </span>
+
                         )}
+
                       </td>
 
                     </tr>
+
                   );
+
                 })}
 
               </tbody>
@@ -324,8 +443,11 @@ const AdminAdmissionApproval = () => {
             </table>
 
             {/* PAGINATION */}
+
             <div className="d-flex justify-content-center mt-3">
+
               {Array.from({ length: totalPages }, (_, i) => (
+
                 <button
                   key={i}
                   className={`btn btn-sm mx-1 ${
@@ -337,15 +459,21 @@ const AdminAdmissionApproval = () => {
                 >
                   {i + 1}
                 </button>
+
               ))}
+
             </div>
 
           </div>
 
         </div>
+
       </div>
+
     </div>
+
   );
+
 };
 
 export default AdminAdmissionApproval;
