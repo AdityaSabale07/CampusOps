@@ -71,6 +71,7 @@ public class SecurityConfig {
                 // ⭐ NEW → DISCOUNT OFFERS (VERY IMPORTANT)
                 .requestMatchers("/api/discounts/batch/**")
                 .permitAll()
+                .requestMatchers("/api/payment/**").permitAll()
 
                 // =====================================================
                 // 🔓 SWAGGER

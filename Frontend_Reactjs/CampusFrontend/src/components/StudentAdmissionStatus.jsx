@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 const StudentAdmissionStatus = () => {
 
   const [email, setEmail] = useState("");
-  const [data, setData] = useState(null);
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const formatDate = (date) => {
@@ -18,34 +18,49 @@ const StudentAdmissionStatus = () => {
   };
 
   const checkStatus = async () => {
+
     if (!email.trim()) {
       toast.error("Enter email");
       return;
     }
 
     try {
+
       setLoading(true);
+
       const resp = await axios.get(
         `/api/modular-registration/status/email/${email}`
       );
-      setData(resp.data);
+
+      setData(resp.data || []);
+
     } catch {
+
       toast.error("No admission found");
-      setData(null);
+      setData([]);
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   const badge = (status) => {
+
     if (status === "APPROVED")
       return "badge bg-success px-4 py-2";
+
     if (status === "REJECTED")
       return "badge bg-danger px-4 py-2";
+
     return "badge bg-warning text-dark px-4 py-2";
+
   };
 
   return (
+
     <div
       className="d-flex justify-content-center align-items-start"
       style={{
@@ -58,10 +73,11 @@ const StudentAdmissionStatus = () => {
         animation: "gradientMove 12s ease infinite"
       }}
     >
+
       <div
         style={{
           width: "100%",
-          maxWidth: "760px",
+          maxWidth: "820px",
           background: "white",
           borderRadius: "18px",
           padding: "32px",
@@ -71,18 +87,27 @@ const StudentAdmissionStatus = () => {
       >
 
         {/* HEADER */}
+
         <div className="text-center mb-3">
+
           <h4 className="fw-bold m-0">📊 Admission Status</h4>
+
           <small className="text-muted">
             Check your admission & payment details
           </small>
+
         </div>
 
-        {/* EMAIL + BUTTON */}
-        <div className="row align-items-end mb-2">
+        {/* EMAIL INPUT */}
+
+        <div className="row align-items-end mb-3">
 
           <div className="col-md-8">
-            <label className="fw-bold mb-1">📧 Registered Email</label>
+
+            <label className="fw-bold mb-1">
+              📧 Registered Email
+            </label>
+
             <input
               type="email"
               className="form-control"
@@ -93,9 +118,11 @@ const StudentAdmissionStatus = () => {
                 border: "1px solid #dfe3e8"
               }}
             />
+
           </div>
 
           <div className="col-md-4 d-grid">
+
             <button
               className="btn btn-primary"
               onClick={checkStatus}
@@ -107,170 +134,174 @@ const StudentAdmissionStatus = () => {
             >
               {loading ? "Checking..." : "🔍 Check Status"}
             </button>
+
           </div>
 
         </div>
 
-        {/* BACK BUTTON */}
-        <div className="text-center mb-3">
+        {/* BACK */}
+
+        <div className="text-center mb-4">
+
           <button
             className="btn btn-outline-secondary btn-sm"
             onClick={() => window.location.href = "/admission"}
           >
             ⬅ Back
           </button>
+
         </div>
 
-        {/* RESULT */}
-        {data && (
+        {/* MULTIPLE ADMISSIONS */}
 
-          <div>
+        {data.map((d, index) => (
 
-            {/* STATUS BADGE */}
+          <div
+            key={index}
+            className="mb-4 p-3"
+            style={{
+              border: "1px solid #e6e9ef",
+              borderRadius: "14px",
+              background: "#fafbfc"
+            }}
+          >
+
+            {/* STATUS */}
+
             <div className="text-center mb-3">
-              <span className={badge(data.status)}>
-                {data.status}
+
+              <span className={badge(d.status)}>
+                {d.status}
               </span>
+
             </div>
 
-            {/* TWO COLUMN DETAILS */}
+            {/* DETAILS */}
+
             <div className="row g-3">
 
               <div className="col-md-6">
+
                 <div
                   className="p-3"
                   style={{
                     border: "1px solid #e6e9ef",
                     borderRadius: "12px",
-                    background: "#fafbfc"
+                    background: "white"
                   }}
                 >
-                  <h6 className="fw-bold mb-2">🎓 Admission Info</h6>
 
-                  <div><b>👤 Name:</b> {data.studentName}</div>
-                  <div><b>📧 Email:</b> {data.email}</div>
-                  <div><b>🆔 Reg ID:</b> {data.registrationId || "-"}</div>
-                  <div><b>📚 Batch:</b> {data.batchName || "-"}</div>
+                  <h6 className="fw-bold mb-2">
+                    🎓 Admission Info
+                  </h6>
+
+                  <div><b>👤 Name:</b> {d.studentName}</div>
+                  <div><b>📧 Email:</b> {d.email}</div>
+                  <div><b>🆔 Reg ID:</b> {d.registrationId}</div>
+                  <div><b>📚 Course:</b> {d.courseName}</div>
+                  <div><b>🎓 Batch:</b> {d.batchName}</div>
+
                 </div>
+
               </div>
 
               <div className="col-md-6">
+
                 <div
                   className="p-3"
                   style={{
                     border: "1px solid #e6e9ef",
                     borderRadius: "12px",
-                    background: "#fafbfc"
+                    background: "white"
                   }}
                 >
-                  <h6 className="fw-bold mb-2">💰 Fee Details</h6>
 
-                  <div><b>Original:</b> ₹ {data.originalFee || "-"}</div>
+                  <h6 className="fw-bold mb-2">
+                    💰 Fee Details
+                  </h6>
 
-                  <div>
-                    <b>
-                      {data.status === "PENDING"
-                        ? "Estimated Discount"
-                        : "Discount"}:
-                    </b>{" "}
-                    ₹ {data.discountAmount || 0}
-                  </div>
+                  <div><b>Original:</b> ₹ {d.originalFee}</div>
 
-                  <div>
-                    <b>
-                      {data.status === "PENDING"
-                        ? "Estimated Final"
-                        : "Final Payable"}:
-                    </b>{" "}
-                    ₹ {data.finalAmount}
-                  </div>
+                  <div><b>Discount:</b> ₹ {d.discountAmount}</div>
 
-                  {data.discountName && (
+                  <div><b>Final Fee:</b> ₹ {d.finalAmount}</div>
+
+                  {d.discountName && (
                     <div>
-                      <b>🎁 Type:</b> {data.discountName} ({data.discountType})
+                      <b>🎁 Type:</b> {d.discountName} ({d.discountType})
                     </div>
                   )}
+
                 </div>
+
               </div>
 
             </div>
 
-            {/* PAYMENT SECTION */}
-            {(data.paymentStatus || data.status === "APPROVED") && (
-              <div
-                className="mt-3 p-3"
-                style={{
-                  border: "1px solid #e6e9ef",
-                  borderRadius: "12px",
-                  background: "#fafbfc"
-                }}
-              >
+            {/* PAYMENT */}
 
-                <h6 className="fw-bold mb-2">💳 Payment Info</h6>
+            <div className="mt-3">
 
-                {data.paymentStatus && (
-                  <div><b>Status:</b> {data.paymentStatus}</div>
+              <h6 className="fw-bold mb-2">
+                💳 Payment Info
+              </h6>
+
+              <div><b>Status:</b> {d.paymentStatus || "-"}</div>
+
+              {d.paymentDueDate && (
+                <div>
+                  <b>Due:</b> {formatDate(d.paymentDueDate)}
+                </div>
+              )}
+
+              {d.status === "APPROVED" &&
+                d.paymentStatus === "PENDING" && (
+
+                  <button
+                    className="btn btn-primary btn-sm mt-2"
+                    onClick={() =>
+                      window.location.href = `/fake-payment/${d.id}`
+                    }
+                  >
+                    💰 Pay Now
+                  </button>
+
                 )}
 
-                {data.paymentDueDate && (
-                  <div><b>Due Date:</b> {formatDate(data.paymentDueDate)}</div>
-                )}
+              {d.status === "APPROVED" &&
+                d.paymentStatus === "PAID" && (
 
-                {data.status === "APPROVED" &&
-                  data.paymentStatus === "PENDING" && (
-                    <button
-                      className="btn btn-primary btn-sm mt-2"
-                      onClick={() =>
-                        window.location.href = `/fake-payment/${data.id}`
-                      }
-                    >
-                      💰 Pay Now
-                    </button>
-                  )}
+                  <div className="alert alert-success mt-2 mb-0">
 
-                {data.status === "APPROVED" &&
-                  data.paymentStatus === "PAID" && (
-                    <div className="alert alert-success mt-2 mb-0">
-                      🎉 Payment Successful
-                      <div>
-                        <b>Email:</b> {data.email}
-                      </div>
-                      <div>
-                        <b>Password:</b>{" "}
-                        {data.tempPassword || "welcome123"}
-                      </div>
-                      <button
-                        className="btn btn-success btn-sm mt-2"
-                        onClick={() => window.location.href = "/"}
-                      >
-                        🔐 Login
-                      </button>
+                    🎉 Payment Completed
+
+                    <div>
+                      <b>Email:</b> {d.email}
                     </div>
-                  )}
 
-                {data.status === "REJECTED" && (
-                  <div className="alert alert-danger mt-2 mb-0">
-                    ❌ Admission Rejected
+                    <div>
+                      <b>Password:</b> {d.tempPassword || "welcome123"}
+                    </div>
+
                     <button
-                      className="btn btn-danger btn-sm mt-2"
-                      onClick={() =>
-                        window.location.href =
-                          "/admission/register"}
+                      className="btn btn-success btn-sm mt-2"
+                      onClick={() => window.location.href = "/"}
                     >
-                      📝 Apply Again
+                      🔐 Login
                     </button>
+
                   </div>
+
                 )}
 
-              </div>
-            )}
+            </div>
 
           </div>
-        )}
+
+        ))}
 
       </div>
 
-      {/* Gradient Animation */}
       <style>
         {`
         @keyframes gradientMove {
@@ -278,11 +309,13 @@ const StudentAdmissionStatus = () => {
           50% {background-position: 100% 50%;}
           100% {background-position: 0% 50%;}
         }
-      `}
+        `}
       </style>
 
     </div>
+
   );
+
 };
 
 export default StudentAdmissionStatus;
